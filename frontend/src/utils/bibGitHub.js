@@ -2,7 +2,7 @@
 import axios from 'axios';
 import bibtexParse from 'bibtex-parser-js';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.resolve.pub';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.resolve.pub';
 
 /**
  * Load a .bib file from GitHub repository

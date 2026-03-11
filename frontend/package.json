@@ -37,7 +37,6 @@
     "react-katex": "^3.0.1",
     "react-markdown": "^9.0.1",
     "react-router-dom": "^6.22.0",
-    "react-scripts": "^5.0.1",
     "react-syntax-highlighter": "^15.6.1",
     "tiptap-math": "^1.0.0",
     "track-change-extension": "github:chenyuncai/tiptap-track-change-extension",
@@ -45,18 +44,14 @@
     "turndown-plugin-gfm": "^1.0.2",
     "web-vitals": "^4.2.4"
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.2.0"
   },
-  "proxy": "http://localhost:3001",
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "browserslist": {
     "production": [
