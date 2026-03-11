@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { fetchUser, checkAuth } from '../utils/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.resolve.pub';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.resolve.pub';
 
 export const AuthContext = createContext();
 

@@ -232,6 +232,23 @@ turndownService.use([tables, strikethrough]);
 // Preserve <ins> and <del> tags during Turndown conversion
 turndownService.keep(['ins', 'del']);
 
+// Preserve comment marks as inline HTML spans so they round-trip through QMD files.
+// markdown-it (html:true) passes the span through on load; CommentMark.parseHTML()
+// recognises span[data-comment-id] and restores the TipTap mark.
+turndownService.addRule('commentMark', {
+  filter: (node) => node.nodeName === 'SPAN' && node.hasAttribute('data-comment-id'),
+  replacement: (content, node) => {
+    const enc = (s) => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+    const id        = enc(node.getAttribute('data-comment-id'));
+    const username  = enc(node.getAttribute('data-username'));
+    const avatarUrl = enc(node.getAttribute('data-avatar-url'));
+    const text      = enc(node.getAttribute('data-text'));
+    const timestamp = enc(node.getAttribute('data-timestamp'));
+    const resolved  = node.getAttribute('data-resolved') || 'false';
+    return `<span data-comment-id="${id}" data-username="${username}" data-avatar-url="${avatarUrl}" data-text="${text}" data-timestamp="${timestamp}" data-resolved="${resolved}">${content}</span>`;
+  }
+});
+
 // After initializing turndownService add rule for refs
 turndownService.addRule('bibMention', {
   filter: (node, options) => {

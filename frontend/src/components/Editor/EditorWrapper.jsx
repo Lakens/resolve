@@ -18,6 +18,7 @@ import { ipynbToTiptapDoc } from '../../utils/notebookConversionUtils';
 import { qmdToTiptapDoc } from '../../utils/quartoConversionUtils';
 import EditorToolbar from './EditorToolbar';
 import { CommentsSidebar } from '../Comments/CommentsSidebar';
+import { PreviewPane } from './PreviewPane';
 import LoginButton from '../Auth/LoginButton';
 import { fetchNotebooksInRepo } from '../../utils/api';
 import InlineMath from '../../utils/InlineMath/inlineMath';
@@ -81,6 +82,7 @@ const EditorWrapper = ({
   references,
 }) => {
   const [showComments, setShowComments] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [notebooks, setNotebooks] = useState([]);
   const [error, setError] = useState(null);
   const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
@@ -259,6 +261,12 @@ const EditorWrapper = ({
               <button className="glass-button" onClick={onSaveFileClick}>
                 {filePath?.endsWith('.qmd') ? 'Save File' : 'Save Notebook'}
               </button>
+              <button
+                className={`glass-button${showPreview ? ' glass-button--active' : ''}`}
+                onClick={() => setShowPreview(v => !v)}
+              >
+                {showPreview ? 'Hide Preview' : 'Preview'}
+              </button>
             </div>
         </div>
         {editor && <EditorToolbar editor={editor} selectedRepo={selectedRepo} filePath={filePath} />}
@@ -278,7 +286,8 @@ const EditorWrapper = ({
                 </div>
               </div>
             </div>
-            {editor && <CommentsSidebar editor={editor} />}
+            {showPreview && <PreviewPane editor={editor} />}
+            {!showPreview && editor && <CommentsSidebar editor={editor} />}
           </div>
         </div>
       </main>
