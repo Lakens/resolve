@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { subscribePackageStatus } from '../../utils/webRSingleton';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -25,6 +25,8 @@ import LoginButton from '../Auth/LoginButton';
 import { fetchNotebooksInRepo } from '../../utils/api';
 import InlineMath from '../../utils/InlineMath/inlineMath';
 import { formatApaReference } from '../../utils/apaUtils';
+import { LanguageToolExtension } from './LanguageToolExtension';
+import { LanguageToolPopover } from './LanguageToolPopover';
 
 const ReferencesList = ({ references }) => {
   if (!references || references.length === 0) return null;
@@ -82,6 +84,20 @@ const EditorWrapper = ({
     setCommentMarkKey((prev) => prev + 1);
   }
 
+  // LanguageTool popover state
+  const [ltMatch, setLtMatch] = useState(null);
+  const [ltAnchorPos, setLtAnchorPos] = useState(null);
+  const ltMatchClickRef = useRef(null);
+  ltMatchClickRef.current = useCallback((match, event) => {
+    setLtMatch(match);
+    setLtAnchorPos({ x: event.clientX, y: event.clientY });
+  }, []);
+
+  const handleLtDismiss = useCallback(() => {
+    setLtMatch(null);
+    setLtAnchorPos(null);
+  }, []);
+
   const editor = useEditor({
     extensions: extensions || [
       StarterKit,
@@ -97,12 +113,13 @@ const EditorWrapper = ({
       Mathematics,
       InlineMath,
       CommentMark.configure({
-        HTMLAttributes: {
-          class: 'comment-mark',
-        },
+        HTMLAttributes: { class: 'comment-mark' },
         onUpdate: handleCommentMarkUpdate
       }),
       CitationMark,
+      LanguageToolExtension.configure({
+        onMatchClick: (match, event) => ltMatchClickRef.current?.(match, event),
+      }),
     ],
     content: '',
     enableContentCheck: true,
@@ -113,6 +130,12 @@ const EditorWrapper = ({
       },
     },
   });
+
+  const handleLtAccept = useCallback((replacement) => {
+    if (!editor || !ltMatch) return;
+    editor.chain().focus().deleteRange({ from: ltMatch.from, to: ltMatch.to }).insertContentAt(ltMatch.from, replacement).run();
+    handleLtDismiss();
+  }, [editor, ltMatch, handleLtDismiss]);
 
   // Attach referenceManager to editor when both are available
   useEffect(() => {
@@ -312,6 +335,13 @@ const EditorWrapper = ({
           </div>
         )}
       </main>
+
+      <LanguageToolPopover
+        match={ltMatch}
+        anchorPos={ltAnchorPos}
+        onAccept={handleLtAccept}
+        onDismiss={handleLtDismiss}
+      />
     </div>
   );
 };
