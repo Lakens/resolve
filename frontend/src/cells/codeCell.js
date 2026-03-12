@@ -274,9 +274,20 @@ function CodeCellNodeView({ node, editor, getPos }) {
 function renderOutput(output, index) {
   if (output.output_type === 'stream') {
     const isErr = output.name === 'stderr';
+    const text = Array.isArray(output.text) ? output.text.join('') : output.text;
+    // kableExtra and other HTML-producing functions write HTML to stdout
+    if (!isErr && /<[a-zA-Z]/.test(text)) {
+      return (
+        <div
+          key={index}
+          className="code-cell-output-html"
+          dangerouslySetInnerHTML={{ __html: text }}
+        />
+      );
+    }
     return (
       <pre key={index} className={`code-cell-output-stream${isErr ? ' code-cell-output-stderr' : ''}`}>
-        <code>{Array.isArray(output.text) ? output.text.join('') : output.text}</code>
+        <code>{text}</code>
       </pre>
     );
   }

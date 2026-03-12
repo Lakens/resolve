@@ -8,165 +8,144 @@ Resolve is a browser-based editor for `.qmd` (Quarto Markdown) files stored on G
 
 - Edit `.qmd` files with a rich WYSIWYG interface (headings, bold, italic, tables, math)
 - Run R code chunks directly in the browser using WebAssembly (no local R required)
+- Packages like `tidyverse`, `kableExtra`, and `palmerpenguins` are pre-loaded automatically
 - Load and save files to any GitHub repository you have access to
 - Inline comments, track changes, and citation management
-- Share documents by inviting collaborators to your GitHub repo
 
 ---
 
-## Quick start
+## Overview of the setup
 
-| Step | Windows | Mac |
-|------|---------|-----|
-| 1. Install Node.js | Download from https://nodejs.org (LTS version) | Same |
-| 2. Get the code | Download ZIP from GitHub, extract it | Same |
-| 3. Install dependencies | Double-click `install.bat` | Run `./install.sh` in Terminal |
-| 4. Create `.env` file | See [GitHub OAuth setup](#step-3--create-a-github-oauth-app) below | Same |
-| 5. Launch the app | Double-click `start.bat` | Run `./start.sh` in Terminal |
+Setting up Resolve takes about 10 minutes and has four parts:
+
+1. **Install Node.js** — the runtime that powers the app (one-time)
+2. **Install the app's dependencies** — download the libraries Resolve needs (one-time, automated)
+3. **Connect to GitHub** — register Resolve as an app in your GitHub account so the "Login with GitHub" button works (one-time, ~5 minutes)
+4. **Launch and log in** — double-click to start, then click "Login with GitHub" in your browser
 
 ---
 
-## Prerequisites
-
-### 1. Node.js
+## Step 1 — Install Node.js
 
 Download and install Node.js **version 18 or later** from https://nodejs.org
 Choose the **LTS** version. Accept all defaults during installation.
 
-### 2. A GitHub account
-
-You need a GitHub account to use Resolve. Sign up at https://github.com if you don't have one.
+> **Already have Node.js?** Check your version by running `node --version` in a terminal. If it says v18 or higher, you're good.
 
 ---
 
-## Installation
+## Step 2 — Get the code and install dependencies
 
-### Step 1 — Get the code
+**Get the code:**
 
-**Option A — Download ZIP** (easiest, no git required):
-1. Go to https://github.com/Lakens/resolve
-2. Click the green **"Code"** button → **"Download ZIP"**
-3. Extract the ZIP somewhere on your computer (e.g. your Desktop or Documents folder)
+- **Option A — Download ZIP** (easiest): Go to https://github.com/Lakens/resolve, click the green **"Code"** button → **"Download ZIP"**, then extract it somewhere on your computer (Desktop or Documents is fine).
+- **Option B — Clone with git**: `git clone https://github.com/Lakens/resolve.git`
 
-**Option B — Clone with git** (if you have git installed):
-```bash
-git clone https://github.com/Lakens/resolve.git
-```
+**Install dependencies** (one-time setup):
 
-### Step 2 — Install dependencies
+| Platform | How |
+|----------|-----|
+| Windows | Double-click `install.bat` in the resolve folder |
+| Mac | Open Terminal, type `chmod +x install.sh && ./install.sh`, press Enter |
 
-This only needs to be done once. It downloads all the packages the app needs.
+The script checks that Node.js is installed and downloads everything the app needs. It takes 1–2 minutes and tells you when it's done.
 
-**Windows:** Double-click `install.bat` in the resolve folder.
-**Mac:** Open Terminal, drag the `install.sh` file into it, press Enter. If you get a "permission denied" error, first run:
-```bash
-chmod +x install.sh
-./install.sh
-```
+---
 
-The script checks that Node.js is installed and then runs `npm install` in both the `backend` and `frontend` folders automatically. It will tell you when it's done and what to do next.
+## Step 3 — Connect Resolve to GitHub (enables login)
 
-> **What is npm install?** npm is Node's package manager — it downloads the libraries the app depends on into a `node_modules` folder. This is like installing R packages, but for JavaScript.
+Resolve uses GitHub to store your files and to verify who you are. To make the **"Login with GitHub"** button work, you need to register Resolve as an "OAuth App" in your GitHub account. This is a one-time step that takes about 5 minutes.
 
-### Step 3 — Create a GitHub OAuth App
+**Why is this needed?** GitHub requires any app that reads or writes repositories on your behalf to be registered. This is what creates the secure login flow.
 
-Resolve uses GitHub OAuth so it can read and write your repositories on your behalf. You need to register it as an "OAuth App" in your GitHub account.
+### 3a — Create the OAuth App
 
 1. Go to https://github.com/settings/developers
 2. Click **"OAuth Apps"** in the left sidebar
 3. Click **"New OAuth App"**
-4. Fill in the form:
-   - **Application name**: `Resolve (local)` (or anything you like)
-   - **Homepage URL**: `http://localhost:5173`
-   - **Authorization callback URL**: `http://localhost:3001/api/auth/callback`
+4. Fill in the form exactly as shown:
+
+   | Field | Value |
+   |-------|-------|
+   | Application name | `Resolve` (or anything you like) |
+   | Homepage URL | `http://localhost:5173` |
+   | Authorization callback URL | `http://localhost:3001/api/auth/callback` |
+
 5. Click **"Register application"**
-6. On the next page, note down your **Client ID**
-7. Click **"Generate a new client secret"** and note down the **Client Secret** (you only see it once)
+6. On the next page, copy the **Client ID** — you'll need it in the next step
+7. Click **"Generate a new client secret"**, then copy the **Client Secret** — you only see it once, so copy it now
 
-### Step 4 — Create the backend environment file
+### 3b — Save your credentials
 
-In the `backend/` folder, create a file named `.env` (no extension, just `.env`):
+In the `backend/` folder, create a file named `.env` (just the name `.env`, no other extension).
+Paste the following into it:
 
 ```
-GITHUB_CLIENT_ID=your_client_id_here
-GITHUB_CLIENT_SECRET=your_client_secret_here
+GITHUB_CLIENT_ID=paste_your_client_id_here
+GITHUB_CLIENT_SECRET=paste_your_client_secret_here
 REDIRECT_URI=http://localhost:3001/api/auth/callback
 SESSION_SECRET=any_long_random_string_you_make_up
 NODE_ENV=development
 ```
 
-Replace `your_client_id_here` and `your_client_secret_here` with the values from Step 3.
-For `SESSION_SECRET`, type any long random string — for example: `mySecretKey12345abcdef`.
+Replace the two `paste_your_…` values with what you copied in step 3a.
+For `SESSION_SECRET`, invent any long string — for example: `mySecretKey12345abcdef`.
 
-**The `.env` file is never committed to git** (it's in `.gitignore`) so your secrets stay local.
-
----
-
-## Running the app
-
-### Windows — double-click `start.bat`
-
-From the root of the repository, double-click `start.bat`. It will:
-1. Stop anything already running on ports 3001 and 5173
-2. Open a window for the backend server
-3. Open a window for the frontend
-4. Open your browser to `http://localhost:5173` after 5 seconds
-
-### Mac — run `start.sh`
-
-The first time, make it executable:
-```bash
-chmod +x start.sh
-```
-
-Then run it:
-```bash
-./start.sh
-```
-
-Or double-click it in Finder (right-click → Open).
-
-### Manual start (any platform)
-
-Open two terminal windows:
-
-**Terminal 1 — Backend:**
-```bash
-cd backend
-npm start
-```
-
-**Terminal 2 — Frontend:**
-```bash
-cd frontend
-npm start
-```
-
-Then open your browser to `http://localhost:5173`.
+**The `.env` file is never uploaded to GitHub** (it's in `.gitignore`) so your credentials stay on your computer only.
 
 ---
 
-## First login
+## Step 4 — Launch the app and log in
 
-1. Open `http://localhost:5173` in your browser
-2. Click **"Login with GitHub"**
-3. GitHub will ask you to authorize the app — click **"Authorize"**
-4. You will be redirected back to Resolve and logged in
-5. Select a repository from the dropdown, then select a `.qmd` file to open it
+| Platform | How to launch |
+|----------|--------------|
+| Windows | Double-click `start.bat` |
+| Mac | Run `./start.sh` in Terminal (first time: `chmod +x start.sh`) |
+
+The script opens two windows (backend and frontend) and opens your browser to `http://localhost:5173` after a few seconds.
+
+**To log in:**
+
+1. Click **"Login with GitHub"** on the page
+2. GitHub will ask you to authorize Resolve — click **"Authorize"**
+3. You will be sent back to Resolve, now logged in
+4. Select a repository from the dropdown, then select a `.qmd` file to open it
+
+> **Don't see a "Login with GitHub" button?** Make sure both the backend and frontend windows are running (step 4 opens them automatically). If the button does nothing, check the [troubleshooting](#troubleshooting) section.
 
 ---
 
 ## Running R code
 
-R runs entirely in your browser via WebAssembly — no local R installation is needed.
+R runs entirely in your browser — no local R installation needed.
+
+When you open the app, it automatically installs `tidyverse`, `kableExtra`, and `palmerpenguins` in the background. A blue banner in the bottom-right corner shows the progress. **This takes a few minutes on every page load** — R code will not run until the banner disappears.
+
+Once ready:
 
 - Click the **R** toolbar button to insert a new code chunk
 - Type R code in the chunk
 - Click the **Run** button (▶) on the chunk
-- The first run takes 10–30 seconds while R boots (subsequent runs are instant)
-- Output appears below the chunk
+- Output (text, tables, plots) appears below the chunk
 
-**Note:** Only base R is available by default. Packages like `tidyverse` cannot be installed in the browser version.
+---
+
+## Troubleshooting
+
+**"Login with GitHub" does nothing or shows an error**
+→ Check that `backend/.env` exists and that `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` match your OAuth App exactly (no extra spaces). Restart the backend window after editing `.env`.
+
+**The app opens but I can't see any repositories**
+→ Make sure you clicked "Login with GitHub" and completed the GitHub authorization. Repositories only appear after login. If you just created a GitHub account, create at least one repository on GitHub first.
+
+**R code gives "there is no package called …"**
+→ Wait for the blue "Installing R packages…" banner to disappear before running code. If the banner is gone and the error persists, reload the page.
+
+**R chunks show "Starting R…" and never finish**
+→ Wait up to 60 seconds on first use. If it still hangs, open the browser DevTools (F12 → Console) and look for `[WebR]` log lines.
+
+**Port already in use**
+→ Run `start.bat` (or `start.sh`) again — it kills anything on ports 3001 and 5173 before starting.
 
 ---
 
@@ -177,7 +156,7 @@ resolve/
 ├── backend/              # Express.js API server (port 3001)
 │   ├── api/              # API routes (auth, files, bibliography, etc.)
 │   ├── middleware/        # Security middleware
-│   └── .env              # Your secrets (create this — not in git)
+│   └── .env              # Your credentials (create this — not in git)
 ├── frontend/             # React + Vite app (port 5173)
 │   ├── src/
 │   │   ├── cells/        # Code cell, markdown cell, raw cell
@@ -190,22 +169,6 @@ resolve/
 ├── start.sh              # Mac/Linux: launch backend + frontend
 └── README.md
 ```
-
----
-
-## Troubleshooting
-
-**"Login with GitHub" does nothing or shows an error**
-→ Check that `backend/.env` exists and the `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` values match your OAuth App exactly. Restart the backend after editing `.env`.
-
-**The app opens but I can't see any repositories**
-→ Make sure you are logged in (top right). Your repositories should appear in the dropdown. If you just created your GitHub account, you may need to create a repository first.
-
-**R chunks show "Starting R…" and never finish**
-→ Wait up to 60 seconds on first use. If it still hangs, open the browser DevTools (F12 → Console) and look for `[WebR]` log lines and share any errors.
-
-**Port already in use**
-→ Run `start.bat` (or `start.sh`) again — it kills anything on ports 3001 and 5173 before starting.
 
 ---
 

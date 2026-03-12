@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { subscribePackageStatus } from '../../utils/webRSingleton';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Mathematics from 'tiptap-math';
@@ -87,6 +88,11 @@ const EditorWrapper = ({
   const [error, setError] = useState(null);
   const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
   const [commentMarkKey, setCommentMarkKey] = useState(0);
+  const [pkgStatus, setPkgStatus] = useState({ phase: 'idle', current: null, index: 0, total: 0 });
+
+  useEffect(() => {
+    return subscribePackageStatus(setPkgStatus);
+  }, []);
 
   const handleTrackChangesToggle = (enabled) => {
     setTrackChangesEnabled(enabled);
@@ -217,6 +223,13 @@ const EditorWrapper = ({
       {saveMessage && (
         <div className={`notification ${isError ? 'error' : ''}`}>
           {saveMessage}
+        </div>
+      )}
+      {(pkgStatus.phase === 'installing' || pkgStatus.phase === 'error') && (
+        <div className={`pkg-install-banner${pkgStatus.phase === 'error' ? ' pkg-install-banner--error' : ''}`}>
+          {pkgStatus.phase === 'installing'
+            ? `Installing R packages… ${pkgStatus.current} (${pkgStatus.index}/${pkgStatus.total})`
+            : 'R package installation failed — check browser console (F12) for details'}
         </div>
       )}
       <header className="app-header">

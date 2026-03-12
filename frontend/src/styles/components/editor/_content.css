@@ -525,6 +525,24 @@
   z-index: 1000;
 }
 
+.pkg-install-banner {
+  font-family: var(--ui-font);
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  background: #0073e6;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 0.85rem;
+  z-index: 1000;
+}
+
+.pkg-install-banner--error {
+  background: #cc0000;
+}
+
 .citation {
   background-color: #f0f0f0;
   border-radius: 3px;
