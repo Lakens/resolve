@@ -24,44 +24,22 @@ import { PreviewPane } from './PreviewPane';
 import LoginButton from '../Auth/LoginButton';
 import { fetchNotebooksInRepo } from '../../utils/api';
 import InlineMath from '../../utils/InlineMath/inlineMath';
+import { formatApaReference } from '../../utils/apaUtils';
 
 const ReferencesList = ({ references }) => {
-  console.log("ReferencesList received references:", references);
-  if (!references || references.length === 0) {
-    console.log("No references to display");
-    return null;
-  }
+  if (!references || references.length === 0) return null;
 
   return (
     <div className="references-section">
       <h2>References</h2>
       <div>
-        {references.map((ref, index) => {
-          console.log(`Reference ${index}:`, ref);
-          const { entryTags = {} } = ref;
-          console.log(`EntryTags for reference ${index}:`, entryTags);
-          const { AUTHOR, YEAR, TITLE, JOURNAL, DOI, URL } = entryTags;
-          console.log(`Extracted fields for reference ${index}:`, { AUTHOR, YEAR, TITLE, JOURNAL, DOI, URL });
-          
-          return (
-            <div key={index} className="reference-item">
-              {AUTHOR && `${AUTHOR}. `}
-              {YEAR && `(${YEAR}). `}
-              {TITLE && `${TITLE}. `}
-              {JOURNAL && <em>{JOURNAL}</em>}
-              {DOI && (
-                <a href={`https://doi.org/${DOI}`} target="_blank" rel="noopener noreferrer">
-                  {` doi:${DOI}`}
-                </a>
-              )}
-              {!DOI && URL && (
-                <a href={URL} target="_blank" rel="noopener noreferrer">
-                  {` ${URL}`}
-                </a>
-              )}
-            </div>
-          );
-        })}
+        {references.map((ref, index) => (
+          <p
+            key={index}
+            className="reference-item"
+            dangerouslySetInnerHTML={{ __html: formatApaReference(ref.entryTags || {}) }}
+          />
+        ))}
       </div>
     </div>
   );
@@ -131,6 +109,7 @@ const EditorWrapper = ({
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none',
+          spellcheck: 'true',
       },
     },
   });
@@ -141,6 +120,23 @@ const EditorWrapper = ({
       editor.referenceManager = referenceManager;
     }
   }, [editor, referenceManager]);
+
+  // Word count — prose only, excludes codeCell and rawCell nodes
+  const [wordCount, setWordCount] = useState(0);
+  useEffect(() => {
+    if (!editor) return;
+    const countWords = () => {
+      let text = '';
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === 'codeCell' || node.type.name === 'rawCell') return false;
+        if (node.isText) text += ' ' + node.text;
+      });
+      setWordCount(text.trim().split(/\s+/).filter(w => w.length > 0).length);
+    };
+    countWords();
+    editor.on('update', countWords);
+    return () => editor.off('update', countWords);
+  }, [editor]);
 
   useEffect(() => {
     const loadNotebooks = async () => {
@@ -304,6 +300,9 @@ const EditorWrapper = ({
                     <div className="references-container">
                       <ReferencesList references={references || referenceManager?.getReferences()} />
                     </div>
+                  </div>
+                  <div className="editor-statusbar">
+                    {wordCount.toLocaleString()} words
                   </div>
                 </div>
               </div>

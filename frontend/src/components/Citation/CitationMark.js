@@ -7,14 +7,12 @@ export const CitationMark = Mark.create({
   name: 'citation',
 
   addOptions() {
-    console.log('CitationMark: initializing options');
     return {
       HTMLAttributes: {},
     }
   },
 
   addAttributes() {
-    console.log('CitationMark: setting up attributes');
     return {
       citationKey: { default: null },
       prefix: { default: null },
@@ -26,28 +24,22 @@ export const CitationMark = Mark.create({
   },
 
   parseHTML() {
-    console.log('CitationMark: parsing HTML');
     return [
       {
         tag: 'span[data-citation-key]',
-        getAttrs: element => {
-          const attrs = {
-            citationKey: element.getAttribute('data-citation-key'),
-            prefix: element.getAttribute('data-prefix'),
-            suffix: element.getAttribute('data-suffix'),
-            locator: element.getAttribute('data-locator'),
-            isInBrackets: element.getAttribute('data-in-brackets') === 'true',
-            referenceDetails: element.getAttribute('data-reference-details')
-          };
-          console.log('CitationMark: parsed attributes:', attrs);
-          return attrs;
-        }
+        getAttrs: element => ({
+          citationKey: element.getAttribute('data-citation-key'),
+          prefix: element.getAttribute('data-prefix'),
+          suffix: element.getAttribute('data-suffix'),
+          locator: element.getAttribute('data-locator'),
+          isInBrackets: element.getAttribute('data-in-brackets') === 'true',
+          referenceDetails: element.getAttribute('data-reference-details')
+        })
       }
     ]
   },
 
   renderHTML({ HTMLAttributes }) {
-    console.log('CitationMark: rendering HTML with attributes:', HTMLAttributes);
     const attrs = {
       class: 'citation',
       'data-citation-key': HTMLAttributes.citationKey,
@@ -68,159 +60,66 @@ export const CitationMark = Mark.create({
       attrs.class += ' citation-bracketed';
     }
 
-    console.log('CitationMark: final HTML attributes:', attrs);
     return ['span', attrs, 0]
   },
 
   addProseMirrorPlugins() {
-    console.log('CitationMark: adding ProseMirror plugins');
     return [
       new Plugin({
         key: new PluginKey('citation-tooltip'),
         view(editorView) {
-          console.log('CitationMark: initializing tooltip plugin view');
-          // Keep track of elements that already have tooltips
+          // Lazily create tooltips on hover via event delegation.
+          // This avoids the MutationObserver → tippy DOM mutation → ProseMirror re-render loop.
           const tippyInstances = new WeakMap();
-          
-          // Function to create a tooltip for a single citation element
-          const createTooltipForElement = (element) => {
-            console.log('CitationMark: creating tooltip for element:', element);
-            console.log('CitationMark: element classes:', element.className);
-            console.log('CitationMark: citation key:', element.getAttribute('data-citation-key'));
-            console.log('CitationMark: reference details:', element.getAttribute('data-reference-details'));
-            
-            // Skip if already has a tooltip
-            if (tippyInstances.has(element)) {
-              console.log('CitationMark: element already has tooltip, skipping');
-              return;
+
+          const buildContent = (element) => {
+            const referenceDetails = element.getAttribute('data-reference-details');
+            let refData;
+            if (referenceDetails) {
+              try { refData = JSON.parse(referenceDetails); } catch (e) {}
             }
-            
-            const instance = tippy(element, {
-              content: 'Loading...',
-              allowHTML: true,
-              delay: [200, 0], // Show after 200ms, hide immediately
-              placement: 'top',
-              arrow: true,
-              theme: 'light-border',
-              interactive: true,
-              appendTo: document.body,
-              // Only compute content when the tooltip is shown
-              onShow(instance) {
-                console.log('CitationMark: tooltip showing, computing content');
-                const referenceDetails = element.getAttribute('data-reference-details');
-                console.log('CitationMark: reference details from attribute:', referenceDetails);
-                
-                let refData;
-                
-                if (referenceDetails) {
-                  // Parse the stored reference details
-                  try {
-                    refData = JSON.parse(referenceDetails);
-                    console.log('CitationMark: parsed reference data:', refData);
-                  } catch (e) {
-                    console.error('CitationMark: Failed to parse reference details:', e);
-                  }
-                } else {
-                  console.log('CitationMark: No reference details in attribute, trying reference manager');
-                }
-                
-                if (!refData) {
-                  // Fallback to reference manager
-                  const citationKey = element.getAttribute('data-citation-key');
-                  console.log('CitationMark: looking up citation key in reference manager:', citationKey);
-                  console.log('CitationMark: reference manager available:', !!editorView.state.schema.cached.referenceManager);
-                  
-                  const reference = editorView.state.schema.cached.referenceManager?.getReference(citationKey);
-                  console.log('CitationMark: reference from manager:', reference);
-                  
-                  if (reference) {
-                    refData = reference.entryTags;
-                    console.log('CitationMark: reference entry tags:', refData);
-                  }
-                }
-                
-                if (refData) {
-                  const { AUTHOR, YEAR, TITLE, JOURNAL } = refData;
-                  console.log('CitationMark: extracted citation data:', { AUTHOR, YEAR, TITLE, JOURNAL });
-                  
-                  // Format authors (remove any '{' and '}' from BibTeX formatting)
-                  const authors = AUTHOR ? AUTHOR.replace(/[{}]/g, '') : '';
-                  
-                  // Construct citation in academic format
-                  const parts = [];
-                  if (authors) parts.push(authors);
-                  if (YEAR) parts.push(`(${YEAR})`);
-                  if (TITLE) parts.push(TITLE.replace(/[{}]/g, ''));
-                  if (JOURNAL) parts.push(`<em>${JOURNAL.replace(/[{}]/g, '')}</em>`);
-                  
-                  const content = `<div class="citation-tooltip">${parts.join(', ')}</div>`;
-                  console.log('CitationMark: setting tooltip content:', content);
-                  instance.setContent(content);
-                } else {
-                  console.log('CitationMark: No reference data found, showing fallback message');
-                  instance.setContent('Reference details not available');
-                }
-              }
-            });
-            
-            // Store the instance
-            tippyInstances.set(element, instance);
-            console.log('CitationMark: tooltip created and stored');
+            if (!refData) {
+              const citationKey = element.getAttribute('data-citation-key');
+              const reference = editorView.state.schema.cached.referenceManager?.getReference(citationKey);
+              if (reference) refData = reference.entryTags;
+            }
+            if (!refData) return 'Reference details not available';
+            const { AUTHOR, YEAR, TITLE, JOURNAL } = refData;
+            const authors = AUTHOR ? AUTHOR.replace(/[{}]/g, '') : '';
+            const parts = [];
+            if (authors) parts.push(authors);
+            if (YEAR) parts.push(`(${YEAR})`);
+            if (TITLE) parts.push(TITLE.replace(/[{}]/g, ''));
+            if (JOURNAL) parts.push(`<em>${JOURNAL.replace(/[{}]/g, '')}</em>`);
+            return `<div class="citation-tooltip">${parts.join(', ')}</div>`;
           };
 
-          // Use MutationObserver to detect new citation elements
-          console.log('CitationMark: setting up MutationObserver');
-          const observer = new MutationObserver(mutations => {
-            console.log('CitationMark: mutation observed, checking for new citations');
-            for (const mutation of mutations) {
-              if (mutation.type === 'childList') {
-                // Check for new citation elements
-                mutation.addedNodes.forEach(node => {
-                  if (node.nodeType === Node.ELEMENT_NODE) {
-                    // Check the node itself
-                    if (node.classList && node.classList.contains('citation')) {
-                      console.log('CitationMark: found new citation element:', node);
-                      createTooltipForElement(node);
-                    }
-                    // Check children
-                    const citations = node.querySelectorAll('.citation');
-                    console.log('CitationMark: found', citations.length, 'citation elements in added node');
-                    citations.forEach(createTooltipForElement);
-                  }
-                });
-              }
+          const handleMouseEnter = (e) => {
+            const element = e.target.closest('.citation');
+            if (!element) return;
+
+            if (!tippyInstances.has(element)) {
+              const instance = tippy(element, {
+                content: buildContent(element),
+                allowHTML: true,
+                delay: [200, 0],
+                placement: 'top',
+                arrow: true,
+                theme: 'light-border',
+                interactive: true,
+                appendTo: document.body,
+                aria: { content: null, expanded: false },
+              });
+              tippyInstances.set(element, instance);
             }
-          });
+          };
 
-          // Start observing
-          console.log('CitationMark: starting to observe DOM for changes');
-          observer.observe(editorView.dom, { 
-            childList: true, 
-            subtree: true 
-          });
-
-          // Initialize tooltips for existing citations
-          const existingCitations = editorView.dom.querySelectorAll('.citation');
-          console.log('CitationMark: found', existingCitations.length, 'existing citation elements');
-          existingCitations.forEach(createTooltipForElement);
+          editorView.dom.addEventListener('mouseenter', handleMouseEnter, true);
 
           return {
-            update(view, prevState) {
-              console.log('CitationMark: plugin view update called');
-              // No need to do anything here, the MutationObserver handles new elements
-            },
+            update() {},
             destroy() {
-              console.log('CitationMark: destroying plugin view');
-              // Stop observing
-              observer.disconnect();
-              
-              // Clean up all tooltips
-              document.querySelectorAll('.citation').forEach(element => {
-                const instance = tippyInstances.get(element);
-                if (instance) {
-                  instance.destroy();
-                }
-              });
+              editorView.dom.removeEventListener('mouseenter', handleMouseEnter, true);
             }
           };
         }

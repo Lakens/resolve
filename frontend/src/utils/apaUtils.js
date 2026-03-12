@@ -3,14 +3,52 @@
  * Works with BibTeX entryTags objects (keys are uppercase: AUTHOR, YEAR, TITLE, …).
  */
 
+// LaTeX diacritic command → Unicode combining map
+const LATEX_DIACRITICS = {
+  '"': { a:'ä',e:'ë',i:'ï',o:'ö',u:'ü',y:'ÿ',A:'Ä',E:'Ë',I:'Ï',O:'Ö',U:'Ü',Y:'Ÿ' },
+  "'": { a:'á',e:'é',i:'í',o:'ó',u:'ú',y:'ý',A:'Á',E:'É',I:'Í',O:'Ó',U:'Ú',Y:'Ý' },
+  '`': { a:'à',e:'è',i:'ì',o:'ò',u:'ù',A:'À',E:'È',I:'Ì',O:'Ò',U:'Ù' },
+  '^': { a:'â',e:'ê',i:'î',o:'ô',u:'û',A:'Â',E:'Ê',I:'Î',O:'Ô',U:'Û' },
+  '~': { a:'ã',n:'ñ',o:'õ',A:'Ã',N:'Ñ',O:'Õ' },
+  'c': { c:'ç',C:'Ç' },
+  'v': { c:'č',s:'š',z:'ž',C:'Č',S:'Š',Z:'Ž' },
+  'u': { a:'ă',A:'Ă' },
+};
+
+/**
+ * Decode BibTeX/LaTeX encoding to plain Unicode.
+ * Handles: {\"e}→ë, ---→—, --→–, {{…}}→…, {…}→…
+ */
+function decodeBibtex(str) {
+  if (!str) return str;
+  return str
+    // LaTeX diacritics: {\"e}, {\'A}, {\^o}, etc.
+    .replace(/\{\\([`'"^~cvuH])([a-zA-Z])\}/g, (_, cmd, letter) => {
+      return LATEX_DIACRITICS[cmd]?.[letter] ?? letter;
+    })
+    // Also handle without braces: \"e, \'A
+    .replace(/\\([`'"^~cvuH])([a-zA-Z])/g, (_, cmd, letter) => {
+      return LATEX_DIACRITICS[cmd]?.[letter] ?? letter;
+    })
+    // Named commands: {\ss}→ß, {\ae}→æ, {\oe}→œ, {\aa}→å
+    .replace(/\{\\ss\}/g, 'ß')
+    .replace(/\{\\ae\}/gi, (m) => m[2] === 'A' ? 'Æ' : 'æ')
+    .replace(/\{\\oe\}/gi, (m) => m[2] === 'O' ? 'Œ' : 'œ')
+    .replace(/\{\\aa\}/gi, (m) => m[2] === 'A' ? 'Å' : 'å')
+    // Em dash and en dash
+    .replace(/---/g, '—')
+    .replace(/--/g, '–')
+    // Strip remaining braces (including double-brace quoting {{…}})
+    .replace(/[{}]/g, '');
+}
+
 /**
  * Parse a BibTeX AUTHOR string into an array of { last, initials } objects.
  * Handles both "Last, First and Last2, First2" and "First Last and First2 Last2".
  */
 function parseAuthors(authorStr) {
   if (!authorStr) return [];
-  return authorStr
-    .replace(/[{}]/g, '')
+  return decodeBibtex(authorStr)
     .split(/\s+and\s+/i)
     .map(a => {
       a = a.trim();
@@ -75,15 +113,15 @@ export function formatApaReference(entryTags) {
     authorStr = parts.join(', ');
   }
 
-  const title = (TITLE || '').replace(/[{}]/g, '');
-  const venue = (JOURNAL || BOOKTITLE || '').replace(/[{}]/g, '');
+  const title = decodeBibtex(TITLE || '');
+  const venue = decodeBibtex(JOURNAL || BOOKTITLE || '');
 
   let ref = `${authorStr} (${year}). ${title}.`;
   if (venue) {
     ref += ` <em>${venue}</em>`;
     if (VOLUME) ref += `, <em>${VOLUME}</em>`;
     if (NUMBER) ref += `(${NUMBER})`;
-    if (PAGES) ref += `, ${PAGES}`;
+    if (PAGES) ref += `, ${PAGES.replace(/--/g, '–')}`;
     ref += '.';
   } else if (PUBLISHER) {
     ref += ` ${PUBLISHER}.`;

@@ -233,6 +233,16 @@ body {
   padding: 2rem 2rem;
 }
 
+.editor-statusbar {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0.375rem 2rem 0.75rem;
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #999);
+  text-align: right;
+  user-select: none;
+}
+
 /* ── Legacy / compat selectors ─────────────────────────────────────────── */
 
 .glass-button { display: none; } /* replaced by .hdr-btn */
