@@ -43,8 +43,7 @@ export class GitHubReferenceManager {
         );
         this.bibPath = `${notebookDir}/references.bib`;
         this.references = [];
-        // Create empty bib file without recursion
-        await this._saveWithoutInit();
+        // No bib file in this repo — don't create one until a reference is added
       }
 
       this._initialized = true;
