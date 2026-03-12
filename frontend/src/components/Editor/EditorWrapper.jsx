@@ -235,17 +235,16 @@ const EditorWrapper = ({
         </div>
       )}
       <header className="app-header">
-        <div className="header-content">
-          <h1 className="header-title-R">R</h1> <h1 className="header-title">esolve</h1> <h2>(Beta)</h2>
-
-            <div className="file-controls">
+        <div className="header-top">
+          <div className="header-controls">
+            <div className="header-row">
               <select
                 value={selectedRepo?.fullName || ''}
                 onChange={(e) => {
                   const repo = repositories.find(r => r.fullName === e.target.value);
                   setSelectedRepo(repo);
                 }}
-                className="repo-select glass-select"
+                className="repo-select"
               >
                 <option value="">Select Repository</option>
                 {repositories.map((repo) => (
@@ -254,37 +253,39 @@ const EditorWrapper = ({
                   </option>
                 ))}
               </select>
-
-              {selectedRepo && (
-                <select
-                  value={filePath}
-                  onChange={(e) => setFilePath(e.target.value)}
-                  className="repo-select glass-select"
-                >
-                  <option value="">Select a file</option>
-                  {notebooks.map((notebook) => (
-                    <option key={notebook} value={notebook}>
-                      {notebook}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              <button className="glass-button" onClick={onLoadFile}>
-                {filePath?.endsWith('.qmd') ? 'Load File' : 'Load Notebook'}
-              </button>
-              <button className="glass-button" onClick={onSaveFileClick}>
-                {filePath?.endsWith('.qmd') ? 'Save File' : 'Save Notebook'}
-              </button>
-              <button
-                className={`glass-button${showPreview ? ' glass-button--active' : ''}`}
-                onClick={() => setShowPreview(v => !v)}
+            </div>
+            <div className="header-row">
+              <select
+                value={filePath}
+                onChange={(e) => setFilePath(e.target.value)}
+                className="file-select"
               >
-                {showPreview ? 'Hide Preview' : 'Preview'}
+                <option value="">Select a file</option>
+                {notebooks.map((notebook) => (
+                  <option key={notebook} value={notebook}>
+                    {notebook}
+                  </option>
+                ))}
+              </select>
+              <button className="hdr-btn" onClick={onLoadFile}>
+                {filePath?.endsWith('.qmd') ? 'Load' : 'Load'}
+              </button>
+              <button className="hdr-btn" onClick={onSaveFileClick}>
+                Save
               </button>
             </div>
+          </div>
         </div>
-        {editor && <EditorToolbar editor={editor} selectedRepo={selectedRepo} filePath={filePath} referenceManager={referenceManager} />}
+        {editor && (
+          <EditorToolbar
+            editor={editor}
+            selectedRepo={selectedRepo}
+            filePath={filePath}
+            referenceManager={referenceManager}
+            showPreview={showPreview}
+            onTogglePreview={() => setShowPreview(v => !v)}
+          />
+        )}
       </header>
 
       <main className="app-main flex-grow overflow-y-auto">

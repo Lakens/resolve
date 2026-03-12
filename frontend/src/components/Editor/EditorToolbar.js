@@ -18,7 +18,7 @@ import { zoteroPickReference } from '../../utils/api';
 import bibtexParse from 'bibtex-parser-js';
 import { formatApaInText } from '../../utils/apaUtils';
 
-const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, referenceManager }) => {
+const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, referenceManager, showPreview, onTogglePreview }) => {
   const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
@@ -28,11 +28,15 @@ const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, refer
   const [commentText, setCommentText] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isZoteroPicking, setIsZoteroPicking] = useState(false);
+  const [showTableMenu, setShowTableMenu] = useState(false);
+  const [tableMenuPos, setTableMenuPos] = useState({ top: 0, left: 0 });
 
   const headingMenuRef = useRef(null);
   const textColorMenuRef = useRef(null);
   const bgColorMenuRef = useRef(null);
   const fontFamilyMenuRef = useRef(null);
+  const tableMenuRef = useRef(null);
+  const tableButtonRef = useRef(null);
 
   const { user } = useAuth();
 
@@ -51,12 +55,15 @@ const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, refer
       if (showFontFamilyMenu && fontFamilyMenuRef.current && !fontFamilyMenuRef.current.contains(e.target)) {
         setShowFontFamilyMenu(false);
       }
+      if (showTableMenu && tableMenuRef.current && !tableMenuRef.current.contains(e.target)) {
+        setShowTableMenu(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showHeadingMenu, showTextColorMenu, showBgColorMenu, showFontFamilyMenu]);
+  }, [showHeadingMenu, showTextColorMenu, showBgColorMenu, showFontFamilyMenu, showTableMenu]);
 
   if (!editor) return null;
 
@@ -294,137 +301,166 @@ const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, refer
   };
 
   return (
-    <div className="editor-container">
-      <div className="modern-toolbar" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+    <div className="toolbar-wrapper">
+      <div className="modern-toolbar">
         {/* Undo/Redo */}
-        <button className="toolbar-btn" onClick={handleUndo} title="Undo"><FaUndo style={{ fontSize: '1.1em' }} /></button>
-        <button className="toolbar-btn" onClick={handleRedo} title="Redo"><FaRedo style={{ fontSize: '1.1em' }} /></button>
-        
-        {/* Heading Level Select */}
-        <div className="toolbar-item">
-          <select
-            onChange={(e) => {
-              const level = parseInt(e.target.value);
-              editor.chain().focus().toggleHeading({ level }).run();
-            }}
-            value={(() => {
-              for (let i = 1; i <= 6; i++) {
-                if (editor.isActive('heading', { level: i })) return i;
-              }
-              return 0;
-            })()}
-            className="glass-select"
-            title="Heading Level"
-          >
-            {headingLevels.map((heading) => (
-              <option key={heading.value} value={heading.value}>
-                {heading.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <button className="toolbar-btn" onClick={handleUndo} title="Undo"><FaUndo /></button>
+        <button className="toolbar-btn" onClick={handleRedo} title="Redo"><FaRedo /></button>
 
-        {/* Font Family Select */}
-        <div className="toolbar-item">
-          <select
-            onChange={(e) => setFontFamily(e.target.value)}
-            className="glass-select"
-            title="Font Family"
-          >
-            {fontFamilies.map((font) => (
-              <option 
-                key={font.name} 
-                value={font.value}
-                style={{ fontFamily: font.value.replace('var(--editor-font-', '').replace(')', '') }}
-              >
-                {font.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className="tb-sep" />
 
-        {/* Separator */}
-        <div style={{ width:'1px', height:'24px', background:'#ddd', margin:'0 0.5rem' }}></div>
-
-        {/* Bold / Italic / Underline / Strike / Highlight */}
-        <button className="toolbar-btn" onClick={handleBold} title="Bold"><FaBold style={{ fontSize: '1.1em' }} /></button>
-        <button className="toolbar-btn" onClick={handleItalic} title="Italic"><FaItalic style={{ fontSize: '1.1em' }} /></button>
-        <button className="toolbar-btn" onClick={handleUnderline} title="Underline"><FaUnderline style={{ fontSize: '1.1em' }} /></button>
-        <button className="toolbar-btn" onClick={handleStrikethrough} title="Strikethrough"><FaStrikethrough style={{ fontSize: '1.1em' }} /></button>
-        <button className="toolbar-btn" onClick={handleHighlight} title="Highlight"><FaHighlighter style={{ fontSize: '1.1em' }} /></button>
-
-        {/* Separator */}
-        <div style={{ width:'1px', height:'24px', background:'#ddd', margin:'0 0.5rem' }}></div>
-        
-        {/* Image */}
-        <button className="toolbar-btn" onClick={handleInsertImage} title="Insert Image"><FaImage style={{ fontSize: '1.1em' }} /></button>
-
-        {/* Lists */}
-        <button className="toolbar-btn" onClick={handleBulletList} title="Bulleted List"><FaListUl style={{ fontSize: '1.1em' }} /></button>
-        <button className="toolbar-btn" onClick={handleOrderedList} title="Numbered List"><FaListOl style={{ fontSize: '1.1em' }} /></button>
-
-        {/* Insert R code chunk */}
-        <button className="toolbar-btn" onClick={handleInsertRChunk} title="Insert R code chunk">
-          <BiCodeBlock style={{ fontSize: '1.1em' }} />
-          <span style={{ fontSize: '0.75em', marginLeft: '3px' }}>R</span>
-        </button>
-
-        {/* Separator */}
-        <div style={{ width:'1px', height:'24px', background:'#ddd', margin:'0 0.5rem' }}></div>
-
-        {/* Table */}
-        <div className="table-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <button className="toolbar-btn" onClick={handleInsertTable} title="Insert Table"><BsTable style={{ fontSize: '1.1em' }} /></button>
-          <button className="toolbar-btn" onClick={handleAddRowAfter} title="Add Row Below"><AiOutlineInsertRowBelow style={{ fontSize: '1.1em' }} /></button>
-          <button className="toolbar-btn" onClick={handleAddRowBefore} title="Add Row Above">
-            <AiOutlineInsertRowBelow style={{ transform: 'rotate(180deg)', fontSize: '1.1em' }} />
-          </button>
-          <button className="toolbar-btn" onClick={handleDeleteRow} title="Delete Row">
-            <AiOutlineInsertRowBelow style={{ transform: 'rotate(45deg)', fontSize: '1.1em' }} />
-          </button>
-          <button className="toolbar-btn" onClick={handleSplitCell} title="Split Cell"><AiOutlineSplitCells style={{ fontSize: '1.1em' }} /></button>
-          <button className="toolbar-btn" onClick={handleMergeCells} title="Merge Cells">
-            <AiOutlineSplitCells style={{ transform: 'rotate(90deg)', fontSize: '1.1em' }} />
-          </button>
-          <button className="toolbar-btn" onClick={handleToggleHeaderRow} title="Toggle Header Row">H↔</button>
-        </div>
-
-        {/* Track Changes */}
-        <button
-          className="track-changes-btn"
-          onClick={handleToggleTrackChanges}
-          title="Track Changes"
+        {/* Heading select */}
+        <select
+          className="tb-select tb-select--heading"
+          title="Heading Level"
+          onChange={(e) => {
+            const level = parseInt(e.target.value);
+            if (level) editor.chain().focus().toggleHeading({ level }).run();
+            else editor.chain().focus().setParagraph().run();
+          }}
+          value={(() => {
+            for (let i = 1; i <= 6; i++) {
+              if (editor.isActive('heading', { level: i })) return i;
+            }
+            return 0;
+          })()}
         >
-          <span>Track Changes</span>
-          {trackChangesEnabled ? (
-            <FaToggleOn style={{ fontSize: '1.1em' }} />
-          ) : (
-            <FaToggleOff style={{ fontSize: '1.1em' }} />
-          )}
-        </button>
+          {headingLevels.map((h) => (
+            <option key={h.value} value={h.value}>{h.name}</option>
+          ))}
+        </select>
 
-        {/* Cite from Zotero */}
+        {/* Font select */}
+        <select
+          className="tb-select tb-select--font"
+          title="Font Family"
+          onChange={(e) => setFontFamily(e.target.value)}
+        >
+          {fontFamilies.map((f) => (
+            <option key={f.name} value={f.value}>{f.name}</option>
+          ))}
+        </select>
+
+        <div className="tb-sep" />
+
+        {/* Formatting */}
+        <button className="toolbar-btn" onClick={handleBold} title="Bold"><FaBold /></button>
+        <button className="toolbar-btn" onClick={handleItalic} title="Italic"><FaItalic /></button>
+        <button className="toolbar-btn" onClick={handleUnderline} title="Underline"><FaUnderline /></button>
+        <button className="toolbar-btn" onClick={handleStrikethrough} title="Strikethrough"><FaStrikethrough /></button>
+        <button className="toolbar-btn" onClick={handleHighlight} title="Highlight"><FaHighlighter /></button>
+
+        <div className="tb-sep" />
+
+        {/* Image + Lists */}
+        <button className="toolbar-btn" onClick={handleInsertImage} title="Insert Image"><FaImage /></button>
+        <button className="toolbar-btn" onClick={handleBulletList} title="Bulleted List"><FaListUl /></button>
+        <button className="toolbar-btn" onClick={handleOrderedList} title="Numbered List"><FaListOl /></button>
+
+        <div className="tb-sep" />
+
+        {/* Table — single button with submenu */}
+        <div className="tb-table-wrap" ref={tableMenuRef}>
+          <button
+            ref={tableButtonRef}
+            className={`toolbar-btn${showTableMenu ? ' is-active' : ''}`}
+            onClick={() => {
+              if (tableButtonRef.current) {
+                const r = tableButtonRef.current.getBoundingClientRect();
+                setTableMenuPos({ top: r.bottom + 4, left: r.left });
+              }
+              setShowTableMenu(v => !v);
+            }}
+            title="Table"
+          >
+            <BsTable /><span>Table</span>
+          </button>
+          {showTableMenu && (
+            <div className="tb-table-menu" style={{ top: tableMenuPos.top, left: tableMenuPos.left }}>
+              <button onClick={() => { handleInsertTable(); setShowTableMenu(false); }}>
+                <BsTable /> Insert table
+              </button>
+              <div className="menu-sep" />
+              <button onClick={() => { handleAddRowAfter(); setShowTableMenu(false); }}>
+                <AiOutlineInsertRowBelow /> Add row below
+              </button>
+              <button onClick={() => { handleAddRowBefore(); setShowTableMenu(false); }}>
+                <AiOutlineInsertRowBelow style={{ transform: 'rotate(180deg)' }} /> Add row above
+              </button>
+              <button onClick={() => { handleDeleteRow(); setShowTableMenu(false); }}>
+                Delete row
+              </button>
+              <div className="menu-sep" />
+              <button onClick={() => { handleAddColumnAfter(); setShowTableMenu(false); }}>
+                Add column after
+              </button>
+              <button onClick={() => { handleAddColumnBefore(); setShowTableMenu(false); }}>
+                Add column before
+              </button>
+              <button onClick={() => { handleDeleteColumn(); setShowTableMenu(false); }}>
+                Delete column
+              </button>
+              <div className="menu-sep" />
+              <button onClick={() => { handleMergeCells(); setShowTableMenu(false); }}>
+                <AiOutlineSplitCells style={{ transform: 'rotate(90deg)' }} /> Merge cells
+              </button>
+              <button onClick={() => { handleSplitCell(); setShowTableMenu(false); }}>
+                <AiOutlineSplitCells /> Split cell
+              </button>
+              <button onClick={() => { handleToggleHeaderRow(); setShowTableMenu(false); }}>
+                Toggle header row
+              </button>
+              <div className="menu-sep" />
+              <button onClick={() => { handleDeleteTable(); setShowTableMenu(false); }}>
+                Delete table
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="tb-sep" />
+
+        {/* R chunk + Cite pills */}
+        <button className="tb-insert-btn" onClick={handleInsertRChunk} title="Insert R code chunk">
+          <BiCodeBlock /> R
+        </button>
         <button
-          className="toolbar-btn"
+          className="tb-insert-btn"
           onClick={handleCiteZotero}
           disabled={isZoteroPicking}
           title="Cite from Zotero (Better BibTeX)"
         >
-          <FaBookOpen style={{ fontSize: '1.1em' }} />
-          <span style={{ fontSize: '0.75em', marginLeft: '3px' }}>{isZoteroPicking ? '…' : 'Cite'}</span>
+          <FaBookOpen /> {isZoteroPicking ? '…' : 'Cite'}
         </button>
 
-        {/* Share Button */}
+        <div className="tb-sep" />
+
+        {/* Track Changes */}
         <button
-          className="share-btn"
-          onClick={() => {
-            console.log('Opening share modal, selectedRepo:', selectedRepo);
-            setIsShareModalOpen(true);
-          }}
+          className={`tb-action-btn${trackChangesEnabled ? ' tb-action-btn--active' : ''}`}
+          onClick={handleToggleTrackChanges}
+          title="Track Changes"
+        >
+          {trackChangesEnabled ? <FaToggleOn /> : <FaToggleOff />}
+          Track Changes
+        </button>
+
+        {/* Preview */}
+        <button
+          className={`tb-action-btn${showPreview ? ' tb-action-btn--active' : ''}`}
+          onClick={onTogglePreview}
+          title="Toggle Preview"
+        >
+          Preview
+        </button>
+
+        {/* Share */}
+        <button
+          className="tb-action-btn"
+          onClick={() => setIsShareModalOpen(true)}
           title="Share Document"
         >
-          <span>Share Document</span>
-          <FaShare style={{ fontSize: '1.1em' }} />
+          <FaShare /> Share
         </button>
       </div>
 

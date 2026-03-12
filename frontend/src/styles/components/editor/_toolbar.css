@@ -1,180 +1,203 @@
-.editor-toolbar {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-bottom: 1px solid #eee;
-  background-color: rgb(243, 243, 243);
-  position: relative;
-  overflow: visible;
-  flex-wrap: nowrap;
-  align-items: center;
+/* ── Toolbar wrapper ─────────────────────────────────────────────────────── */
+
+.toolbar-wrapper {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 1.25rem;
 }
+
+.modern-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--toolbar-height);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.modern-toolbar::-webkit-scrollbar { display: none; }
+
+/* ── Separators ─────────────────────────────────────────────────────────── */
+
+.tb-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+/* ── Icon buttons ───────────────────────────────────────────────────────── */
 
 .toolbar-btn {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   background: transparent;
   border: none;
-  padding: 0.5rem;
-  margin: 0 0.25rem;
-  border-radius: 4px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  color: #333; /* Subtle dark gray for icons */
-  font-size: .8rem; /* Slightly larger icon size for visibility */
+  color: var(--color-text);
+  font-size: 0.72rem;
+  font-family: var(--ui-font);
+  line-height: 1;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+  height: 28px;
+  min-width: 26px;
 }
 
-.toolbar-btn:hover {
-  background: #f5f5f5; /* Subtle hover highlight */
+.toolbar-btn:hover { background: var(--color-surface-muted); }
+.toolbar-btn:active, .toolbar-btn.is-active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-active);
 }
+.toolbar-btn:disabled { opacity: 0.4; cursor: default; }
+.toolbar-btn svg { font-size: 0.95rem; flex-shrink: 0; }
 
-.toolbar-btn:active {
-  background: #e0e0e0; /* Slightly darker on click */
-}
+/* ── Selects ────────────────────────────────────────────────────────────── */
 
-.toolbar-btn:focus {
-  outline: none; /* Remove default focus outline */
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* Optional focus ring */
-}
-
-/* dropdown */
-
-.heading-dropdown {
-  position: relative;
-  display: inline-block;
-  margin-right: 0.5rem; /* spacing before other buttons */
-}
-
-.heading-dropdown .heading-menu {
-  position: absolute;
-  top: calc(100% + 5px);
-  left: 0;
-  background: #fff;
-  border: 1px solid #eee;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  border-radius: 4px;
-  overflow: hidden;
-  z-index: 9999;
-}
-
-.heading-item {
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-
-.heading-item:hover {
-  background: #f5f5f5;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  height: 36px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 6px;
-  background-color: #f8f9fa;
-  color: rgb(141, 141, 141);
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  min-width: 100px;
-  justify-content: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s ease;
-}
-
-.action-btn:hover {
-  background-color: #e9ecef;
-}
-
-.action-btn:active {
-  background-color: #dee2e6;
-}
-
-.action-btn.active {
-  background-color: #e9ecef;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-/* Apply action-btn to existing buttons */
-.track-changes-btn,
-.share-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  height: 32px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 6px;
-  background-color: #f8f9fa;
-  color: rgb(45, 169, 66);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  min-width: 100px;
-  justify-content: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s ease;
-}
-
-.track-changes-btn:hover,
-.share-btn:hover {
-  background-color: #e9ecef;
-}
-
-.track-changes-btn:active,
-.share-btn:active {
-  background-color: #c8f3cc;
-}
-
-.track-changes-btn.active {
-  background-color: #c8f3cc;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-.track-changes-btn span,
-.share-btn span {
+.tb-select, .glass-select {
+  height: 28px;
+  padding: 0 22px 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 0.75rem;
-  color: rgb(117, 117, 117);
+  font-family: var(--ui-font);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%238A8580' d='M2 3.5l3 3 3-3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  flex-shrink: 0;
+  transition: border-color 0.12s;
+}
+.tb-select:focus, .glass-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+.tb-select--heading { width: 112px; }
+.tb-select--font    { width: 106px; }
+
+/* ── Insert pills (R, Cite) ─────────────────────────────────────────────── */
+
+.tb-insert-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 99px;
+  border: 1.5px solid var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-active);
+  font-size: 0.73rem;
+  font-weight: 600;
+  font-family: var(--ui-font);
+  cursor: pointer;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+.tb-insert-btn:hover { background: var(--color-primary); color: #fff; }
+.tb-insert-btn:disabled { opacity: 0.45; cursor: default; }
+
+/* ── Action buttons (Track Changes, Preview, Share) ─────────────────────── */
+
+.tb-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-family: var(--ui-font);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.tb-action-btn:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+.tb-action-btn.tb-action-btn--active {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  color: var(--color-primary-active);
 }
 
-.toolbar-item {
+/* ── Table submenu ──────────────────────────────────────────────────────── */
+
+.tb-table-wrap {
   position: relative;
   flex-shrink: 0;
 }
 
-/* Glass select styling for all toolbar selects */
-.glass-select {
-  padding: 0 32px 0 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  background: #fff;
-  font-size: 11px;
-  color: #333;
-  height: 32px;
-  display: inline-flex;
+.tb-table-menu {
+  position: fixed;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 9999;
+  min-width: 180px;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tb-table-menu button {
+  display: flex;
   align-items: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  gap: 8px;
+  padding: 7px 14px;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  min-width: 100px;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M2.9 4h6.2L6 8 2.9 4z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  line-height: 30px;
+  font-size: 0.8rem;
+  font-family: var(--ui-font);
+  color: var(--color-text);
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+.tb-table-menu button:hover { background: var(--color-surface-muted); }
+
+.tb-table-menu .menu-sep {
+  height: 1px;
+  background: var(--color-border);
+  margin: 3px 0;
 }
 
-.glass-select:focus {
-  outline: none;
-  border-color: rgba(0, 0, 0, 0.2);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
+/* ── Spacer ─────────────────────────────────────────────────────────────── */
+.tb-spacer { flex: 1; min-width: 8px; }
 
-.glass-select option {
-  padding: 8px;
-  font-size: 11px;
+/* ── Legacy compat ─────────────────────────────────────────────────────── */
+.track-changes-btn, .share-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 26px; padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem; font-weight: 500;
+  font-family: var(--ui-font);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
 }
+.track-changes-btn:hover, .share-btn:hover {
+  background: var(--color-surface-muted); color: var(--color-text);
+}
+.track-changes-btn span, .share-btn span { font-size: 0.72rem; }
