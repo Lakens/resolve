@@ -248,6 +248,58 @@ body {
   color: var(--color-primary-active, #e55a2b);
 }
 
+/* ── Dark mode toggle (header) ──────────────────────────────────────────── */
+
+.hdr-dark-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 4px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.hdr-dark-icon {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.hdr-dark-track {
+  position: relative;
+  width: 30px;
+  height: 17px;
+  background: var(--color-border-strong);
+  border-radius: 99px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.hdr-dark-track.is-dark {
+  background: var(--color-primary);
+}
+
+.hdr-dark-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.hdr-dark-track.is-dark .hdr-dark-thumb {
+  transform: translateX(13px);
+}
+
 .hdr-save-nudge {
   font-size: 0.75rem;
   font-weight: 500;

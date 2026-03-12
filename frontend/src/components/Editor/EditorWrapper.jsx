@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { FaSun, FaMoon } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { subscribePackageStatus } from '../../utils/webRSingleton';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -314,6 +315,16 @@ const EditorWrapper = ({
               {wordCount - wordCountAtLastSave.current} unsaved words
             </span>
           )}
+          <button
+            className="hdr-dark-toggle"
+            onClick={() => setDarkMode(v => !v)}
+            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            <span className="hdr-dark-icon">{darkMode ? <FaSun /> : <FaMoon />}</span>
+            <span className={`hdr-dark-track${darkMode ? ' is-dark' : ''}`}>
+              <span className="hdr-dark-thumb" />
+            </span>
+          </button>
         </div>
         {editor && (
           <EditorToolbar
@@ -323,8 +334,6 @@ const EditorWrapper = ({
             referenceManager={referenceManager}
             showPreview={showPreview}
             onTogglePreview={() => setShowPreview(v => !v)}
-            darkMode={darkMode}
-            onToggleDark={() => setDarkMode(v => !v)}
           />
         )}
       </header>

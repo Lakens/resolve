@@ -4,8 +4,7 @@ import {
   FaListUl, FaListOl, FaQuoteRight, FaCode,
   FaPalette, FaFill, FaComment, FaUndo, FaRedo,
   FaTextHeight, FaHighlighter, FaImage,
-  FaTable, FaToggleOn, FaToggleOff, FaShare, FaBookOpen,
-  FaSun, FaMoon
+  FaTable, FaToggleOn, FaToggleOff, FaShare, FaBookOpen
 } from 'react-icons/fa';
 import { BiCodeBlock } from 'react-icons/bi';
 import { MdFormatClear } from 'react-icons/md';
@@ -19,7 +18,7 @@ import { zoteroPickReference } from '../../utils/api';
 import bibtexParse from 'bibtex-parser-js';
 import { formatApaInText } from '../../utils/apaUtils';
 
-const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, referenceManager, showPreview, onTogglePreview, darkMode, onToggleDark }) => {
+const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, referenceManager, showPreview, onTogglePreview }) => {
   const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
@@ -432,16 +431,6 @@ const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, refer
           title="Cite from Zotero (Better BibTeX)"
         >
           <FaBookOpen /> {isZoteroPicking ? '…' : 'Cite'}
-        </button>
-
-        <div className="tb-sep" />
-
-        {/* Dark mode toggle */}
-        <button className="tb-dark-toggle" onClick={onToggleDark} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}>
-          <span className="tb-dark-toggle-icon">{darkMode ? <FaSun /> : <FaMoon />}</span>
-          <span className={`tb-dark-toggle-track${darkMode ? ' is-dark' : ''}`}>
-            <span className="tb-dark-toggle-thumb" />
-          </span>
         </button>
 
         <div className="tb-sep" />

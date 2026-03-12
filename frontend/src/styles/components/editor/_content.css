@@ -782,3 +782,51 @@
   border-color: #0073e6;
   color: #004b99;
 }
+
+/* ── Dark mode overrides ─────────────────────────────────────────────────── */
+
+[data-theme="dark"] .ProseMirror {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .content-container {
+  background: var(--color-bg);
+}
+
+[data-theme="dark"] .editor-container {
+  background: var(--color-bg);
+}
+
+[data-theme="dark"] .editor-main {
+  background: var(--color-surface);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .editor-content-container {
+  background: var(--color-surface);
+}
+
+[data-theme="dark"] .references-section {
+  background: var(--color-surface);
+}
+
+[data-theme="dark"] .references-section h2 {
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .reference-item {
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .preview-pane {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .preview-pane h1,
+[data-theme="dark"] .preview-pane h2,
+[data-theme="dark"] .preview-pane h3,
+[data-theme="dark"] .preview-pane h4 {
+  color: var(--color-text);
+}

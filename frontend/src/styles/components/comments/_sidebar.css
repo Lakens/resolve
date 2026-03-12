@@ -251,3 +251,27 @@
 .comments-sidebar .reject-button:hover {
   color: #333;
 }
+
+/* ── Dark mode overrides ─────────────────────────────────────────────────── */
+
+[data-theme="dark"] .comments-sidebar {
+  background: var(--color-surface-muted);
+}
+
+[data-theme="dark"] .comment-item {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .comment-username,
+[data-theme="dark"] .comment-text,
+[data-theme="dark"] .comments-sidebar .username,
+[data-theme="dark"] .comments-sidebar .comment-content {
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .comment-timestamp,
+[data-theme="dark"] .comments-sidebar .timestamp,
+[data-theme="dark"] .comment-header {
+  color: var(--color-text-secondary);
+}

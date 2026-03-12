@@ -213,10 +213,10 @@
   left: 2px;
   width: 13px;
   height: 13px;
-  background: var(--color-surface);
+  background: #ffffff;
   border-radius: 50%;
   transition: transform 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .tb-dark-toggle-track.is-dark .tb-dark-toggle-thumb {
