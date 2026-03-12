@@ -3,7 +3,7 @@ import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import React, { useState, useRef, useEffect } from 'react';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronUp, faChevronDown, faPlay, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faChevronUp, faChevronDown, faPlay, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import { getWebR, getWebRStatus, imageBitmapToBase64 } from '../utils/webRSingleton';
 
@@ -106,6 +106,15 @@ function CodeCellNodeView({ node, editor, getPos }) {
       el.removeEventListener('keypress', stop);
     };
   }, [showCode]);
+
+  const handleDelete = () => {
+    const pos = getPos();
+    if (typeof pos === 'number') {
+      editor.view.dispatch(
+        editor.view.state.tr.delete(pos, pos + node.nodeSize)
+      );
+    }
+  };
 
   const toggleCode = () => {
     setShowCode((prev) => !prev);
@@ -219,6 +228,14 @@ function CodeCellNodeView({ node, editor, getPos }) {
             ? (getWebRStatus() === 'loading' ? 'Starting R…' : 'Running…')
             : 'Run'
           }</span>
+        </button>
+
+        <button
+          onClick={handleDelete}
+          className="code-cell-delete-btn"
+          title="Delete chunk"
+        >
+          <FontAwesomeIcon icon={faTrash} />
         </button>
       </div>
 

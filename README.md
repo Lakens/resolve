@@ -1,267 +1,213 @@
-# Resolve: A WYSIWYG Jupyter Notebook Editor with GitHub Integration
+# Resolve — WYSIWYG Quarto Markdown Editor
 
-This is Resolve, a modern WYSIWYG Jupyter Notebook Editor with GitHub Integration. The core goal is to provide a single-page application that allows users to edit notebooks hosted on GitHub, with minimal infrastructure costs. Authentication is handled through GitHub OAuth, the backend runs on serverless functions, and all files are stored in GitHub repositories.
+Resolve is a browser-based editor for `.qmd` (Quarto Markdown) files stored on GitHub. It lets you write, edit, and run R code chunks in the browser — no local R installation needed — and saves everything back to your GitHub repository.
 
-## Table of Contents
+---
 
-- [Key Features](#key-features)
-- [Project Structure](#project-structure)
-- [Process Flows](#process-flows)
-- [Technical Architecture](#technical-architecture)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
+## What it does
 
-## Key Features
+- Edit `.qmd` files with a rich WYSIWYG interface (headings, bold, italic, tables, math)
+- Run R code chunks directly in the browser using WebAssembly (no local R required)
+- Load and save files to any GitHub repository you have access to
+- Inline comments, track changes, and citation management
+- Share documents by inviting collaborators to your GitHub repo
 
-- **GitHub Integration**
-  - Direct repository access and file management
-  - Version control through GitHub
-  - OAuth-based authentication
-  
-- **Rich Text Editing**
-  - WYSIWYG markdown editing
-  - Math equation support
-  - Integrated citation support (provide doi, .bib gets updated)
+---
 
+## Quick start (Windows)
 
-- **Collaboration Tools**
-  - Real-time editor presence detection
-  - Track changes with accept/reject functionality
-  - Inline commenting system
-  - Citation management with BibTeX support
+1. Install the prerequisites (see below)
+2. Clone this repository
+3. Create a GitHub OAuth App and add a `.env` file (see below)
+4. Run `npm install` in both `backend/` and `frontend/`
+5. Double-click `start.bat`
 
+---
 
-## Project Structure
+## Prerequisites
+
+### 1. Node.js
+
+Download and install Node.js **version 18 or later** from https://nodejs.org
+Choose the **LTS** version. Accept all defaults during installation.
+
+To verify it worked, open a terminal and run:
+```
+node --version
+npm --version
+```
+Both should print a version number.
+
+### 2. A GitHub account
+
+You need a GitHub account to use Resolve. Sign up at https://github.com if you don't have one.
+
+---
+
+## Installation
+
+### Step 1 — Clone the repository
+
+Open a terminal (Command Prompt or PowerShell on Windows, Terminal on Mac) and run:
+
+```bash
+git clone https://github.com/Lakens/resolve.git
+cd resolve
+```
+
+Or download the ZIP from GitHub and extract it.
+
+### Step 2 — Install dependencies
+
+```bash
+cd backend
+npm install
+
+cd ../frontend
+npm install
+```
+
+This downloads all required packages. It may take a few minutes the first time.
+
+### Step 3 — Create a GitHub OAuth App
+
+Resolve uses GitHub OAuth so it can read and write your repositories on your behalf. You need to register it as an "OAuth App" in your GitHub account.
+
+1. Go to https://github.com/settings/developers
+2. Click **"OAuth Apps"** in the left sidebar
+3. Click **"New OAuth App"**
+4. Fill in the form:
+   - **Application name**: `Resolve (local)` (or anything you like)
+   - **Homepage URL**: `http://localhost:5173`
+   - **Authorization callback URL**: `http://localhost:3001/api/auth/callback`
+5. Click **"Register application"**
+6. On the next page, note down your **Client ID**
+7. Click **"Generate a new client secret"** and note down the **Client Secret** (you only see it once)
+
+### Step 4 — Create the backend environment file
+
+In the `backend/` folder, create a file named `.env` (no extension, just `.env`):
 
 ```
-/
-├── backend/
-│   ├── api/
-│   │   ├── auth.js                 # GitHub OAuth implementation
-│   │   ├── bibliography/
-│   │   │   ├── load.js            # Load BibTeX files
-│   │   │   └── save.js            # Save BibTeX files
-│   │   ├── collaboration.js        # Repository collaboration & sharing
-│   │   ├── fetchFile.js           # File retrieval
-│   │   ├── saveFile.js            # File saving
-│   │   ├── getRepositories.js     # Repository listing
-│   │   ├── listNotebooks.js       # Notebook listing
-│   │   └── user.js                # User operations
-│   └── middleware/
-│       └── security.js            # Security middleware
-├── frontend/
+GITHUB_CLIENT_ID=your_client_id_here
+GITHUB_CLIENT_SECRET=your_client_secret_here
+REDIRECT_URI=http://localhost:3001/api/auth/callback
+SESSION_SECRET=any_long_random_string_you_make_up
+NODE_ENV=development
+```
+
+Replace `your_client_id_here` and `your_client_secret_here` with the values from Step 3.
+For `SESSION_SECRET`, type any long random string — for example: `mySecretKey12345abcdef`.
+
+**The `.env` file is never committed to git** (it's in `.gitignore`) so your secrets stay local.
+
+---
+
+## Running the app
+
+### Windows — double-click `start.bat`
+
+From the root of the repository, double-click `start.bat`. It will:
+1. Stop anything already running on ports 3001 and 5173
+2. Open a window for the backend server
+3. Open a window for the frontend
+4. Open your browser to `http://localhost:5173` after 5 seconds
+
+### Mac — run `start.sh`
+
+The first time, make it executable:
+```bash
+chmod +x start.sh
+```
+
+Then run it:
+```bash
+./start.sh
+```
+
+Or double-click it in Finder (right-click → Open).
+
+### Manual start (any platform)
+
+Open two terminal windows:
+
+**Terminal 1 — Backend:**
+```bash
+cd backend
+npm start
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm start
+```
+
+Then open your browser to `http://localhost:5173`.
+
+---
+
+## First login
+
+1. Open `http://localhost:5173` in your browser
+2. Click **"Login with GitHub"**
+3. GitHub will ask you to authorize the app — click **"Authorize"**
+4. You will be redirected back to Resolve and logged in
+5. Select a repository from the dropdown, then select a `.qmd` file to open it
+
+---
+
+## Running R code
+
+R runs entirely in your browser via WebAssembly — no local R installation is needed.
+
+- Click the **R** toolbar button to insert a new code chunk
+- Type R code in the chunk
+- Click the **Run** button (▶) on the chunk
+- The first run takes 10–30 seconds while R boots (subsequent runs are instant)
+- Output appears below the chunk
+
+**Note:** Only base R is available by default. Packages like `tidyverse` cannot be installed in the browser version.
+
+---
+
+## Project structure
+
+```
+resolve/
+├── backend/              # Express.js API server (port 3001)
+│   ├── api/              # API routes (auth, files, bibliography, etc.)
+│   ├── middleware/        # Security middleware
+│   └── .env              # Your secrets (create this — not in git)
+├── frontend/             # React + Vite app (port 5173)
 │   ├── src/
-│   │   ├── cells/                 # Cell type implementations
-│   │   │   ├── codeCell.js        # Code cell logic
-│   │   │   ├── markdownCell.js    # Markdown cell logic
-│   │   │   └── rawCell.js         # Raw cell logic
-│   │   ├── components/            # React components
-│   │   │   ├── Auth/              # Authentication components
-│   │   │   │   └── LoginButton.js # GitHub login button
-│   │   │   ├── Citation/          # Citation management
-│   │   │   ├── Comments/          # Commenting system
-│   │   │   ├── Share/             # File sharing components
-│   │   │   │   └── ShareModal.js  # Share dialog & GitHub collab
-│   │   │   └── Editor/            # Notebook editing components
-│   │   ├── contexts/              # React context providers
-│   │   │   └── AuthContext.js     # Authentication context
-│   │   ├── styles/                # CSS styling
-│   │   │   ├── base/              # Base styles and variables
-│   │   │   ├── components/        # Component-specific styles
-│   │   │   │   └── share/         # Share modal styles
-│   │   │   └── layouts/           # Layout styles
-│   │   └── utils/                 # Utility functions
-│   │       ├── api.js             # API interaction utilities
-│   │       ├── GitHubReferenceManager.js # GitHub reference handling
-│   │       ├── ipynbUtils.js      # Notebook file utilities
-│   │       └── markdownConverter.js # Markdown conversion utilities
-│   ├── package.json               # Frontend dependencies
-│   └── public/                    # Public assets
-└── README.md                      # Project documentation
+│   │   ├── cells/        # Code cell, markdown cell, raw cell
+│   │   ├── components/   # Editor, toolbar, comments, citations
+│   │   └── utils/        # API helpers, GitHub utils, WebR singleton
+│   └── public/           # Static files (WebR worker scripts)
+├── start.bat             # Windows launch script
+├── start.sh              # Mac/Linux launch script
+└── README.md
 ```
 
+---
 
-## Process Flows
+## Troubleshooting
 
-### File Opening Flow
-1. User selects repository (`App.js` → `getRepositories.js`)
-2. System loads available notebooks (`listNotebooks.js`)
-3. User selects notebook:
-   - Frontend: `EditorWrapper.jsx` initiates load
-   - Backend: `fetchFile.js` retrieves from GitHub
-   - Conversion: `notebookConversionUtils.js` converts ipynb to editor format
-   - Editor: `EditorWrapper.jsx` initializes with content
+**"Login with GitHub" does nothing or shows an error**
+→ Check that `backend/.env` exists and the `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` values match your OAuth App exactly. Restart the backend after editing `.env`.
 
-### File Saving Flow
-1. User triggers save:
-   - Frontend: `EditorToolbar.js` → `savetoGitHub.js`
-   - Conversion: `notebookConversionUtils.js` converts to ipynb
-   - Backend: `saveFile.js` commits to GitHub
-2. Metadata update:
-   - `GitHubReferenceManager.js` handles references
-   - Active editors list updated
+**The app opens but I can't see any repositories**
+→ Make sure you are logged in (top right). Your repositories should appear in the dropdown. If you just created your GitHub account, you may need to create a repository first.
 
-### Comment System Flow
-1. User creates comment:
-   - `EditorBubbleMenuManager.js` handles selection
-   - `CommentMark.js` creates comment mark
-   - `CommentsSidebar.js` updates UI
-2. Comment storage:
-   - Comments stored in notebook metadata
-   - Synced during file save
+**R chunks show "Starting R…" and never finish**
+→ Wait up to 60 seconds on first use. If it still hangs, open the browser DevTools (F12 → Console) and look for `[WebR]` log lines and share any errors.
 
-### Citation Flow
-1. User adds citation:
-   - `CitationMark.js` handles citation insertion
-   - `bibGitHub.js` manages BibTeX files
-   - `doiUtils.js` handles DOI lookups
-2. Bibliography management:
-   - `bibliography/load.js` retrieves BibTeX
-   - `bibliography/save.js` updates BibTeX file
+**Port already in use**
+→ Run `start.bat` (or `start.sh`) again — it kills anything on ports 3001 and 5173 before starting.
 
-### File Sharing Flow
-1. User initiates sharing:
-   - Clicks share button in editor toolbar
-   - `ShareModal.js` opens with sharing options
-   - User can enter GitHub username or email address
-
-2. Collaborator Resolution:
-   - If email provided:
-     - System searches GitHub for matching username
-     - Uses GitHub API to find user by email
-     - Fails if email is private or not found
-   - If username provided:
-     - Used directly for collaboration
-
-3. Repository Access:
-   - System adds user as collaborator to repository
-   - Uses GitHub API to grant write permissions
-   - Generates unique document URL in format:
-     `/document/:owner/:repo/:path`
-
-4. Invitation Process:
-   - Collaborator receives GitHub repository invitation
-   - Upon accepting invitation:
-     - Gets repository access
-     - Can use shared document link
-     - Document automatically loads correct file
-
-5. Shared Document Access:
-   - User clicks shared document link
-   - System auto-selects repository and file
-   - Editor loads with write permissions
-   - All changes tracked through GitHub
-
-## Technical Architecture
-
-
-### Backend (Express.js Server)
-
-- **Infrastructure**
-  - Deployed on DigitalOcean droplet
-  - Behind a Caddy server for automatic HTTPS.
-  - Process managed by PM2 for robust deployment
-  - Express.js server for scalable API handling
-  - Persistent server architecture with advanced process management
-
-- **Server Characteristics**
-  - Caddy web server
-    - Automatic HTTPS
-    - Simple and powerful configuration
-    - Reverse proxy capabilities
-  - Optimized for modern web application hosting
-
-
-- **Deployment Strategy**
-  - PM2 Process Manager
-    - Automatic process restart
-    - Load balancing
-    - Zero-downtime reloads
-    - Comprehensive application monitoring
-    - Centralized logging
-
-- **Authentication**
-  - GitHub OAuth implementation
-  - Secure session management using express-session
-  - File-based session storage for reliability
-  - Token validation and security middleware
-
-- **Core Capabilities**
-  - Centralized API routing for:
-    - GitHub authentication
-    - File retrieval and saving
-    - Repository and notebook listing
-    - Bibliography management
-
-- **Security Features**
-  - CORS configuration with environment-specific origins
-  - Helmet.js for HTTP header security
-  - Rate limiting to prevent abuse
-  - Secure cookie management
-  - Environment-based configuration
-
-- **Performance Considerations**
-  - Modular API route structure
-  - Efficient middleware for authentication and security
-  - Configurable for both development and production environments
-
-- **Session Management**
-  - Encrypted session storage
-  - Configurable session duration
-  - Secure session secret management
-
-- **File Operations**
-  - File retrieval (`fetchFile.js`)
-  - File saving (`saveFile.js`)
-  - Repository listing (`getRepositories.js`)
-  - Bibliography management (`bibliography/*.js`)
-
-### Frontend
-- **Core Editor**
-  - TipTap-based editor integration
-  - Custom cell types:
-    - Code cells (`codeCell.js`)
-    - Markdown cells (`markdownCell.js`)
-    - Raw cells (`rawCell.js`)
-
-- **Collaboration Features**
-  - Track changes (`TrackChanges.js`)
-  - Comments system (`CommentMark.js`, `CommentsSidebar.js`)
-  - Editor presence (`WarningBanner.js`)
-
-
-## Development
-
-### Prerequisites
-- Node.js 14+
-- GitHub account
-- Vercel account (for deployment)
-
-### Setup
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   # Backend
-   cd backend && npm install
-   
-   # Frontend
-   cd frontend && npm install
-   ```
-3. Configure environment variables
-4. Start development servers:
-   ```bash
-   # Backend
-   cd backend && npm run dev
-   
-   # Frontend
-   cd frontend && npm start
-   ```
-
-## Contributing
-
-Contributions are welcome! 
+---
 
 ## License
 
-This project is licensed under the Elastic License v2 (ELv2) - see the LICENSE.md file for details.
+Elastic License v2 (ELv2) — see [LICENSE.md](LICENSE.md).

@@ -130,6 +130,25 @@
   color: #b36b00;
 }
 
+/* Delete button */
+.code-cell-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border: none;
+  border-left: 1px solid #e0e0e0;
+  background: transparent;
+  color: #aaa;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.code-cell-delete-btn:hover {
+  background: #fff0f0;
+  color: #c0392b;
+}
+
 /* stderr output gets a red tint */
 .code-cell-output-stderr {
   background: #fff5f5;
