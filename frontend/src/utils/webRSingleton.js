@@ -24,7 +24,13 @@ export async function getWebR() {
     _initPromise = (async () => {
       // Dynamic import keeps the large WebR bundle out of the initial chunk.
       const { WebR } = await import('@r-wasm/webr');
-      const webR = new WebR();
+
+      // WebR 0.2.x needs its worker scripts served from the app root.
+      // We copy webr-worker.js + webr-serviceworker.js to /public so Vite
+      // serves them at "/".  Explicitly choosing ServiceWorker (channelType 2)
+      // skips the SharedArrayBuffer attempt, which requires COOP/COEP headers
+      // that most dev servers (and many hosts) don't set.
+      const webR = new WebR({ channelType: 2, serviceWorkerUrl: '/' });
       await webR.init();
       _instance = webR;
       return webR;
