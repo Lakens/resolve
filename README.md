@@ -1,6 +1,6 @@
-# QuartoReview — WYSIWYG Quarto Markdown Editor
+# QuartoReview — macOS Desktop Quarto Editor
 
-QuartoReview is a browser-based editor for `.qmd` (Quarto Markdown) files stored on GitHub. It lets you write, edit, and run R code chunks in the browser — no local R installation needed — and saves everything back to your GitHub repository.
+QuartoReview is a local macOS desktop app for editing `.qmd` (Quarto Markdown) files stored on GitHub. The React frontend and Express backend are bundled together inside an Electron shell, so you launch one app instead of managing separate browser and server processes.
 
 ---
 
@@ -18,10 +18,10 @@ QuartoReview is a browser-based editor for `.qmd` (Quarto Markdown) files stored
 
 Setting up QuartoReview takes about 10 minutes and has four parts:
 
-1. **Install Node.js** — the runtime that powers the app (one-time)
-2. **Install the app's dependencies** — download the libraries QuartoReview needs (one-time, automated)
-3. **Connect to GitHub** — register QuartoReview as an app in your GitHub account so the "Login with GitHub" button works (one-time, ~5 minutes)
-4. **Launch and log in** — double-click to start, then click "Login with GitHub" in your browser
+1. **Install Node.js** — the runtime that powers the app build (one-time)
+2. **Install the app's dependencies** — download the desktop, backend, and frontend packages (one-time)
+3. **Connect GitHub** — use the in-app onboarding flow to authorize QuartoReview with your own GitHub account
+4. **Launch the desktop app** — QuartoReview runs as a standalone macOS application
 
 ---
 
@@ -45,73 +45,85 @@ Choose the **LTS** version. Accept all defaults during installation.
 
 | Platform | How |
 |----------|-----|
-| Windows | Double-click `install.bat` in the resolve folder |
 | Mac | Open Terminal, type `chmod +x install.sh && ./install.sh`, press Enter |
 
-The script checks that Node.js is installed and downloads everything the app needs. It takes 1–2 minutes and tells you when it's done.
+The script checks that Node.js is installed and downloads the desktop, backend, and frontend dependencies. It takes a few minutes and tells you when it's done.
 
 ---
 
-## Step 3 — Connect QuartoReview to GitHub (enables login)
+## Step 3 — Connect GitHub
 
-QuartoReview uses GitHub to store your files and to verify who you are. To make the **"Login with GitHub"** button work, you need to register QuartoReview as an "OAuth App" in your GitHub account. This is a one-time step that takes about 5 minutes.
+On first launch, QuartoReview opens an in-app GitHub setup dialog automatically if the app has not been configured yet.
 
-**Why is this needed?** GitHub requires any app that reads or writes repositories on your behalf to be registered. This is what creates the secure login flow.
+You can connect GitHub in two ways:
 
-### 3a — Create the OAuth App
+### Option A — Personal access token (fastest for a local install)
 
-1. Go to https://github.com/settings/developers
-2. Click **"OAuth Apps"** in the left sidebar
-3. Click **"New OAuth App"**
-4. Fill in the form exactly as shown:
+This is the simplest route for a single-user desktop install.
+
+1. In QuartoReview, click **"Connect GitHub"**
+2. Choose **"Personal token"**
+3. Click **"Open GitHub token page"**
+4. Create a token with repository access on your own GitHub account
+5. Paste the token into QuartoReview
+6. Click **"Save token and sign in"**
+
+QuartoReview validates the token and stores it locally on that Mac.
+
+### Option B — GitHub OAuth App (keeps the explicit authorization flow)
+
+Use this if you want GitHub to show an explicit app authorization screen when signing in.
+
+1. In QuartoReview, click **"Connect GitHub"**
+2. Choose **"GitHub OAuth app"**
+3. Click **"Open GitHub OAuth settings"**
+4. Create a GitHub OAuth app on your own GitHub account with these values:
 
    | Field | Value |
    |-------|-------|
    | Application name | `QuartoReview` (or anything you like) |
-   | Homepage URL | `http://localhost:5173` |
+   | Homepage URL | `http://localhost:3001` |
    | Authorization callback URL | `http://localhost:3001/api/auth/callback` |
 
-5. Click **"Register application"**
-6. On the next page, copy the **Client ID** — you'll need it in the next step
-7. Click **"Generate a new client secret"**, then copy the **Client Secret** — you only see it once, so copy it now
+5. Copy the **Client ID** and **Client Secret** into the QuartoReview setup dialog
+6. Leave the default redirect URI as `http://localhost:3001/api/auth/callback`
+7. Click **"Save and continue to GitHub"**
 
-### 3b — Save your credentials
+GitHub will then show the standard authorization page for your OAuth app, and you sign in with your own GitHub account.
 
-In the `backend/` folder, create a file named `.env` (just the name `.env`, no other extension).
-Paste the following into it:
+### Advanced option — edit the local config file manually
 
-```
-GITHUB_CLIENT_ID=paste_your_client_id_here
-GITHUB_CLIENT_SECRET=paste_your_client_secret_here
-REDIRECT_URI=http://localhost:3001/api/auth/callback
-SESSION_SECRET=any_long_random_string_you_make_up
-NODE_ENV=development
-```
+If needed, QuartoReview stores its local desktop configuration here:
 
-Replace the two `paste_your_…` values with what you copied in step 3a.
-For `SESSION_SECRET`, invent any long string — for example: `mySecretKey12345abcdef`.
+`~/Library/Application Support/QuartoReview/.env`
 
-**The `.env` file is never uploaded to GitHub** (it's in `.gitignore`) so your credentials stay on your computer only.
+Most users should not need to edit this file directly, because the app now manages it through the GUI onboarding flow.
 
 ---
 
-## Step 4 — Launch the app and log in
+## Step 4 — Launch the desktop app
 
-| Platform | How to launch |
-|----------|--------------|
-| Windows | Double-click `start.bat` |
-| Mac | Run `./start.sh` in Terminal (first time: `chmod +x start.sh`) |
+Run:
 
-The script opens two windows (backend and frontend) and opens your browser to `http://localhost:5173` after a few seconds.
+```bash
+chmod +x start.sh
+./start.sh
+```
 
-**To log in:**
+This builds the frontend, starts the embedded backend, and opens the Electron desktop app.
 
-1. Click **"Login with GitHub"** on the page
-2. GitHub will ask you to authorize QuartoReview — click **"Authorize"**
-3. You will be sent back to QuartoReview, now logged in
-4. Select a repository from the dropdown, then select a `.qmd` file to open it
+**First launch behavior:**
 
-> **Don't see a "Login with GitHub" button?** Make sure both the backend and frontend windows are running (step 4 opens them automatically). If the button does nothing, check the [troubleshooting](#troubleshooting) section.
+1. QuartoReview opens
+2. If GitHub has not been configured yet, the app shows the setup dialog automatically
+3. Choose either **"Personal token"** or **"GitHub OAuth app"**
+4. Complete the setup flow and continue into the editor
+
+To build a distributable macOS app bundle and disk image, run:
+
+```bash
+npm run dist
+```
 
 ---
 
@@ -138,11 +150,11 @@ Once ready:
 
 ## Troubleshooting
 
-**"Login with GitHub" does nothing or shows an error**
-→ Check that `backend/.env` exists and that `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` match your OAuth App exactly (no extra spaces). Restart the backend window after editing `.env`.
+**The GitHub setup dialog appears, but sign-in still fails**
+→ If you used a personal access token, make sure the token has repository access. If you used OAuth, make sure the client ID, client secret, and redirect URI match your GitHub OAuth app exactly.
 
 **The app opens but I can't see any repositories**
-→ Make sure you clicked "Login with GitHub" and completed the GitHub authorization. Repositories only appear after login. If you just created a GitHub account, create at least one repository on GitHub first.
+→ Make sure you completed the in-app GitHub setup flow successfully. Repositories only appear after authentication. If you just created a GitHub account, create at least one repository on GitHub first.
 
 > **Need help?** Submit issues at [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview).
 
@@ -155,8 +167,8 @@ Once ready:
 **R chunks show "Starting R…" and never finish**
 → Wait up to 60 seconds on first use. If it still hangs, open the browser DevTools (F12 → Console) and look for `[WebR]` log lines.
 
-**Port already in use**
-→ Run `start.bat` (or `start.sh`) again — it kills anything on ports 3001 and 5173 before starting.
+**Port 3001 is already in use**
+→ Quit the conflicting process or restart QuartoReview after freeing port 3001.
 
 ---
 
@@ -164,20 +176,19 @@ Once ready:
 
 ```
 QuartoReview/
-├── backend/              # Express.js API server (port 3001)
+├── electron/             # Electron main/preload process
+├── backend/              # Express.js API server (embedded in the desktop app)
 │   ├── api/              # API routes (auth, files, bibliography, etc.)
 │   ├── middleware/        # Security middleware
-│   └── .env              # Your credentials (create this — not in git)
-├── frontend/             # React + Vite app (port 5173)
+│   └── .env.example      # Desktop configuration template
+├── frontend/             # React + Vite app
 │   ├── src/
 │   │   ├── cells/        # Code cell, markdown cell, raw cell
 │   │   ├── components/   # Editor, toolbar, comments, citations
 │   │   └── utils/        # API helpers, GitHub utils, WebR singleton
 │   └── public/           # Static files (WebR worker scripts)
-├── install.bat           # Windows: first-time dependency install
-├── install.sh            # Mac/Linux: first-time dependency install
-├── start.bat             # Windows: launch backend + frontend
-├── start.sh              # Mac/Linux: launch backend + frontend
+├── install.sh            # Install all desktop dependencies
+├── start.sh              # Build and launch the desktop app
 └── README.md
 ```
 

@@ -1,6 +1,5 @@
+import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
@@ -8,15 +7,26 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import session from 'express-session';
 import FileStore from 'session-file-store';
-import { createRateLimiter, secureCookies, validateToken } from './middleware/security.js';
+import { createRateLimiter, secureCookies } from './middleware/security.js';
+import {
+  allowedOrigins,
+  backendEnvPath,
+  getFrontendDistDir,
+  getWebRDistDir,
+  isDesktopMode,
+  isHostedProduction,
+  sessionDir
+} from './config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const envPath = path.resolve(__dirname, '.env');
 console.log('Loading .env file');
-dotenv.config({ path: envPath });
+dotenv.config({ path: backendEnvPath });
 
 const FileStoreSession = FileStore(session);
+const frontendDistDir = getFrontendDistDir();
+const webRDistDir = getWebRDistDir();
+const serveDesktopFrontend = isDesktopMode && !!frontendDistDir;
+
+fs.mkdirSync(sessionDir, { recursive: true });
 
 console.log('Environment variables loaded');
 
@@ -36,15 +46,19 @@ const fetchRawFileRoute = await import('./api/fetchRawFile.js');
 const app = express();
 
 // Trust proxy - needed for secure cookies behind nginx/Caddy in production only
-if (process.env.NODE_ENV === 'production') {
+if (isHostedProduction) {
   app.set('trust proxy', 1);
 }
 
 // CORS configuration based on environment
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'production' 
-        ? ['https://www.resolve.pub', 'https://resolve.pub']
-        : 'http://localhost:5173',
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error(`Origin not allowed: ${origin}`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
@@ -66,6 +80,15 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     contentSecurityPolicy: false
 }));
+
+if (serveDesktopFrontend) {
+  app.use((req, res, next) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    next();
+  });
+}
+
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -77,24 +100,24 @@ app.options('*', cors(corsOptions));
 // Configure express-session
 app.use(session({
   store: new FileStoreSession({
-    path: './sessions',
+    path: sessionDir,
     ttl: 43200, // 12 hours in seconds
     retries: 0,
     reapInterval: 3600, // 1 hour in seconds
     logFn: () => {}, // Disable verbose logging
     // Only encrypt session files in production to avoid decryption issues in dev
-    ...(process.env.NODE_ENV === 'production' && { secret: process.env.SESSION_SECRET })
+    ...(isHostedProduction && { secret: process.env.SESSION_SECRET })
   }),
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
   rolling: true, // Forces cookie set on every response
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: isHostedProduction,
     httpOnly: true,
     maxAge: 12 * 60 * 60 * 1000, // 12 hours
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    domain: process.env.NODE_ENV === 'production' ? '.resolve.pub' : undefined
+    sameSite: isHostedProduction ? 'none' : 'lax',
+    domain: isHostedProduction ? '.resolve.pub' : undefined
   },
   name: 'sessionId'
 }));
@@ -129,8 +152,8 @@ app.use((req, res, next) => {
   }
 });
 
-// In development, auto-inject the PAT from .env so login is not required
-if (process.env.NODE_ENV !== 'production') {
+// Outside hosted production, auto-inject the PAT from .env so login is optional.
+if (!isHostedProduction) {
   app.use((req, res, next) => {
     if (!req.session.githubToken && process.env.GITHUB_TOKEN) {
       req.session.githubToken = process.env.GITHUB_TOKEN;
@@ -157,7 +180,7 @@ const protectedRoutes = [
 // Middleware to check if user is authenticated
 const requireAuth = (req, res, next) => {
   const hasSession = req.session && req.session.githubToken;
-  const hasEnvToken = process.env.NODE_ENV !== 'production' && !!process.env.GITHUB_TOKEN;
+  const hasEnvToken = !isHostedProduction && !!process.env.GITHUB_TOKEN;
   if (hasSession || hasEnvToken) {
     next();
   } else {
@@ -182,11 +205,25 @@ app.use('/api/fileHistory', fileHistoryRoute.default);
 app.use('/api/fileAtCommit', fileAtCommitRoute.default);
 app.use('/api/fetchRawFile', fetchRawFileRoute.default);
 
+if (serveDesktopFrontend && webRDistDir) {
+  app.use('/webr-dist', (req, res, next) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+  }, express.static(webRDistDir));
+}
+
+if (serveDesktopFrontend) {
+  app.use(express.static(frontendDistDir));
+  app.get(/^\/(?!api(?:\/|$)).*/, (req, res) => {
+    res.sendFile(path.join(frontendDistDir, 'index.html'));
+  });
+}
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ 
-        error: process.env.NODE_ENV === 'production' 
+        error: isHostedProduction
             ? 'Internal server error' 
             : err.message 
     });

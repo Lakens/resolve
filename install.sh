@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "================================================"
-echo " Resolve - First-time setup"
+echo " QuartoReview Desktop - First-time setup"
 echo "================================================"
 echo ""
 
@@ -21,23 +21,19 @@ fi
 echo "Node.js found: $(node --version)"
 echo ""
 
-echo "Installing backend dependencies..."
-cd "$SCRIPT_DIR/backend"
-npm install
-
-echo ""
-echo "Installing frontend dependencies..."
-cd "$SCRIPT_DIR/frontend"
-npm install
+cd "$SCRIPT_DIR"
+echo "Installing desktop, backend, and frontend dependencies..."
+npm run install:all
 
 echo ""
 echo "================================================"
 echo " Installation complete!"
 echo "================================================"
 echo ""
-echo "Next step: create the file  backend/.env"
-echo "See README.md for instructions on what to put in it."
-echo "(You need a GitHub OAuth App - takes about 2 minutes.)"
+echo "Next step: run ./start.sh once."
+echo "The desktop app will create a template config file in:"
+echo "  ~/Library/Application Support/QuartoReview/.env"
+echo "Fill that file with either a GitHub token or OAuth credentials."
 echo ""
-echo "Once .env is ready, run  ./start.sh  to launch the app."
+echo "Then run ./start.sh again to launch the desktop app."
 echo ""

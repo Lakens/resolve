@@ -1,8 +1,7 @@
 // Utilities for handling .bib files with GitHub integration
 import axios from 'axios';
 import bibtexParse from 'bibtex-parser-js';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.resolve.pub';
+import { buildApiUrl } from './runtime';
 
 /**
  * Load a .bib file from GitHub repository
@@ -19,7 +18,7 @@ export async function loadBibFromGitHub(selectedRepo, notebookPath, owner) {
   });
 
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/bibliography/load`, {
+    const response = await axios.get(buildApiUrl('/api/bibliography/load'), {
       params: {
         repository: selectedRepo,
         notebookPath
@@ -47,7 +46,7 @@ export async function saveBibToGitHub(content, path, sha, selectedRepo) {
   try {
     const cleanPath = path.replace(/^\/+/, ''); // Remove leading slashes
     
-    const response = await axios.post(`${API_BASE_URL}/api/bibliography/save`, {
+    const response = await axios.post(buildApiUrl('/api/bibliography/save'), {
       content,
       path: cleanPath,
       repository: selectedRepo,

@@ -7,3 +7,9 @@ backend/node_modules/
 frontend/node_modules/
 backend/sessions/
 frontend/dist/
+dist/
+*.dmg
+*.zip
+.tmp-session-test/
+.tmp-session-test-*/
+.tmp-desktop-env

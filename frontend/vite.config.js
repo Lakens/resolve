@@ -1,6 +1,6 @@
 import { defineConfig, transformWithEsbuild } from 'vite';
 import react from '@vitejs/plugin-react';
-import { createReadStream, existsSync, statSync } from 'fs';
+import { cpSync, createReadStream, existsSync, mkdirSync, rmSync, statSync } from 'fs';
 import { join, extname, resolve } from 'path';
 
 // Serve WebR's local dist files at /webr-dist/ so we never hit the CDN.
@@ -43,6 +43,16 @@ export default defineConfig({
         });
       },
     },
+    {
+      name: 'copy-webr-dist',
+      closeBundle() {
+        const outputDir = resolve('dist');
+        const targetDir = join(outputDir, 'webr-dist');
+        rmSync(targetDir, { recursive: true, force: true });
+        mkdirSync(outputDir, { recursive: true });
+        cpSync(webRDistDir, targetDir, { recursive: true });
+      },
+    },
   ],
   optimizeDeps: {
     esbuildOptions: {
@@ -59,5 +69,8 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:3001',
     },
+  },
+  build: {
+    outDir: 'dist',
   },
 });
