@@ -297,6 +297,7 @@ const EditorWrapper = ({
       )}
       <header className="app-header">
         <div className="header-top">
+          <img src="/logo.png" alt="QuartoReview" className="app-logo" />
           <select
             value={selectedRepo?.fullName || ''}
             onChange={(e) => {
@@ -414,6 +415,10 @@ const EditorWrapper = ({
         onAccept={handleLtAccept}
         onDismiss={handleLtDismiss}
       />
+
+      <footer className="app-footer">
+        Built on <a href="https://github.com/MichelNivard/resolve" target="_blank" rel="noreferrer">Resolve</a> by Michel Nivard. Made by Daniel Lakens. Submit issues to <a href="https://github.com/Lakens/QuartoReview" target="_blank" rel="noreferrer">github.com/Lakens/QuartoReview</a>.
+      </footer>
 
       {showCommitDialog && (
         <div className="commit-dialog-overlay" onClick={() => setShowCommitDialog(false)}>
