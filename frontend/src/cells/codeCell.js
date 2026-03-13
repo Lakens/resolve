@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronUp, faChevronDown, faPlay, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 
-import { getWebR, getWebRStatus } from '../utils/webRSingleton';
+import { getWebR, getWebRStatus, getFailedPackages } from '../utils/webRSingleton';
 
 export const CodeCell = Node.create({
   name: 'codeCell',
@@ -134,12 +134,25 @@ function CodeCellNodeView({ node, editor, getPos }) {
     setRunning(true);
     setRunError(null);
 
+    // Warn early if this chunk calls library() for a package that failed to install
+    const code = Array.isArray(source) ? source.join('') : (source || '');
+    const failedPkgs = getFailedPackages();
+    if (failedPkgs.size > 0) {
+      const libMatches = [...code.matchAll(/(?:library|require)\s*\(\s*["']?([a-zA-Z][a-zA-Z0-9._]*)["']?\s*[,)]/g)];
+      const blocked = libMatches.map(m => m[1]).filter(p => failedPkgs.has(p));
+      if (blocked.length > 0) {
+        setRunError(`Cannot run: package${blocked.length > 1 ? 's' : ''} ${blocked.map(p => `'${p}'`).join(', ')} not available for WebAssembly.`);
+        setRunning(false);
+        return;
+      }
+    }
+
     try {
       const webR = await getWebR();
       const shelter = await new webR.Shelter();
 
       try {
-        const code = Array.isArray(source) ? source.join('') : (source || '');
+        // code is already declared above
 
         // Wrap user code so that:
         //  1. Canvas device is reset for fresh plot capture.
@@ -250,7 +263,13 @@ function CodeCellNodeView({ node, editor, getPos }) {
         await shelter.purge();
       }
     } catch (err) {
-      setRunError(err.message || 'R execution failed');
+      let msg = err.message || 'R execution failed';
+      // Make missing-package errors actionable
+      const missingPkg = msg.match(/there is no package called ['"]([\w.]+)['"]/i);
+      if (missingPkg) {
+        msg = `Package '${missingPkg[1]}' is not available for WebAssembly and could not be loaded. Chunks that depend on it will not run.`;
+      }
+      setRunError(msg);
     } finally {
       setRunning(false);
     }

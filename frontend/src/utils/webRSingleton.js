@@ -140,19 +140,27 @@ export async function installPackagesForQmd(qmdContent) {
     console.log(`[WebR] Installing ${pkg} (${i + 1}/${packages.length})…`);
     try {
       await webR.installPackages([pkg], { quiet: true });
+      // installPackages() only emits an R *warning* when a binary isn't found
+      // — it never throws.  Verify the package is actually in the library.
+      await webR.evalRVoid(`find.package("${pkg}")`);
       console.log(`[WebR] ${pkg} installed.`);
     } catch (err) {
-      const message = err?.message || 'Not available for WebAssembly';
-      console.warn(`[WebR] Failed to install ${pkg}:`, message);
-      errors.push({ pkg, message });
+      console.warn(`[WebR] ${pkg} not available for WebAssembly.`);
+      errors.push({ pkg, message: 'Not available for WebAssembly' });
     }
   }
 
   if (errors.length > 0) {
     _setPackageStatus({ phase: 'error', current: null, errors });
+    console.warn('[WebR] Unavailable packages:', errors.map(e => e.pkg).join(', '));
   } else {
     _setPackageStatus({ phase: 'done', current: null, errors: [] });
   }
+}
+
+/** Returns the set of package names that failed to install (unavailable for WebAssembly). */
+export function getFailedPackages() {
+  return new Set((_packageStatus.errors || []).map(e => e.pkg));
 }
 
 /**
