@@ -160,6 +160,7 @@ const EditorWrapper = ({
   // Word count — prose only, excludes codeCell and rawCell nodes
   const [wordCount, setWordCount] = useState(0);
   const wordCountAtLastSave = useRef(0);
+  const isDirty = useRef(false);
   useEffect(() => {
     if (!editor) return;
     const countWords = () => {
@@ -170,10 +171,26 @@ const EditorWrapper = ({
       });
       setWordCount(text.trim().split(/\s+/).filter(w => w.length > 0).length);
     };
+    const markDirty = () => { isDirty.current = true; };
     countWords();
     editor.on('update', countWords);
-    return () => editor.off('update', countWords);
+    editor.on('update', markDirty);
+    return () => {
+      editor.off('update', countWords);
+      editor.off('update', markDirty);
+    };
   }, [editor]);
+
+  // Warn before closing/refreshing when there are unsaved changes
+  useEffect(() => {
+    const handler = (e) => {
+      if (!isDirty.current) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
 
   useEffect(() => {
     const loadNotebooks = async () => {
@@ -198,6 +215,7 @@ const EditorWrapper = ({
   const onLoadFile = async () => {
     try {
       await handleLoadFile();
+      isDirty.current = false;
     } catch (error) {
       setError(error.message);
     }
@@ -217,6 +235,7 @@ const EditorWrapper = ({
     try {
       await handleSaveFile(editor, commitMsg.trim() || 'Update document');
       wordCountAtLastSave.current = wordCount;
+      isDirty.current = false;
     } catch (error) {
       setError(error.message);
     }
