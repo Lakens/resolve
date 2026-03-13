@@ -1,13 +1,14 @@
 import axios from 'axios';
+import { getApiBaseUrl } from './runtime';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.resolve.pub';
+const API_BASE_URL = getApiBaseUrl();
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
 
 // Create an axios instance with specific config
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL || undefined,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -41,6 +42,24 @@ export const checkAuth = async () => {
     console.error('Error checking auth:', err);
     return false;
   }
+};
+
+export const getAuthStatus = async () => {
+  try {
+    const res = await api.get('/api/auth/check');
+    return res.data;
+  } catch (err) {
+    console.error('Error fetching auth status:', err);
+    return {
+      authenticated: false,
+      oauthConfigured: false
+    };
+  }
+};
+
+export const saveAuthSetup = async (payload) => {
+  const res = await api.post('/api/auth/setup', payload);
+  return res.data;
 };
 
 export const fetchNotebook = async (path, repository) => {

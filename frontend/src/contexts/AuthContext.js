@@ -1,8 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { fetchUser, checkAuth } from '../utils/api';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.resolve.pub';
+import { fetchUser, getAuthStatus } from '../utils/api';
+import { buildApiUrl } from '../utils/runtime';
 
 export const AuthContext = createContext();
 
@@ -17,30 +16,52 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [oauthConfigured, setOauthConfigured] = useState(false);
+  const [tokenConfigured, setTokenConfigured] = useState(false);
+  const [desktopMode, setDesktopMode] = useState(false);
+  const [setupPath, setSetupPath] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
+  const refreshAuth = async () => {
+    try {
+      setError(null);
+
+      const authStatus = await getAuthStatus();
+      setOauthConfigured(Boolean(authStatus.oauthConfigured));
+      setTokenConfigured(Boolean(authStatus.tokenConfigured));
+      setDesktopMode(Boolean(authStatus.desktopMode));
+      setSetupPath(authStatus.setupPath || '');
+
+      if (authStatus.authenticated) {
         const userData = await fetchUser();
         if (userData) {
           setUser(userData);
           setIsAuthenticated(true);
+          return authStatus;
         }
-      } catch (err) {
-        console.error('Failed to load user:', err);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    loadUser();
+      setUser(null);
+      setIsAuthenticated(false);
+      return authStatus;
+    } catch (err) {
+      console.error('Failed to load user:', err);
+      setUser(null);
+      setIsAuthenticated(false);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshAuth().catch(() => {});
   }, []);
 
   const logout = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
+      await axios.post(buildApiUrl('/api/auth/logout'), {}, { withCredentials: true });
       setUser(null);
       setIsAuthenticated(false);
     } catch (err) {
@@ -62,7 +83,12 @@ export const AuthProvider = ({ children }) => {
       user, 
       setUser, 
       isAuthenticated,
+      oauthConfigured,
+      tokenConfigured,
+      desktopMode,
+      setupPath,
       setIsAuthenticated,
+      refreshAuth,
       logout 
     }}>
       {children}

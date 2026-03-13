@@ -1,5 +1,6 @@
 import express from 'express';
 import { Octokit } from '@octokit/rest';
+import { defaultFrontendUrl } from '../config.js';
 
 const router = express.Router();
 
@@ -82,7 +83,7 @@ router.post('/invite', async (req, res) => {
     }
 
     // Generate share link with file path
-    const frontendUrl = process.env.FRONTEND_URL || 'https://resolve.pub';
+    const frontendUrl = process.env.FRONTEND_URL || defaultFrontendUrl;
     const shareLink = filePath 
       ? `${frontendUrl}/document/${owner}/${repo}/${filePath}`
       : `${frontendUrl}/document/${owner}/${repo}`;

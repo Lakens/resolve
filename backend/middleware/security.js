@@ -1,5 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import path from 'path';
+import { isHostedProduction } from '../config.js';
 
 // Rate limiting middleware
 export const createRateLimiter = (windowMs = 15 * 60 * 1000, max = 400) => {
@@ -23,7 +24,7 @@ export const sanitizePath = (filePath) => {
 // Enhanced cookie security middleware
 export const secureCookies = (req, res, next) => {
     // Set secure cookie options in production
-    if (process.env.NODE_ENV === 'production') {
+    if (isHostedProduction) {
         res.cookie('token', req.cookies.token, {
             httpOnly: true,
             secure: true,
@@ -41,9 +42,9 @@ export const sessionConfig = {
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: true,
-        sameSite: 'none',
-        domain: '.resolve.pub',
+        secure: isHostedProduction,
+        sameSite: isHostedProduction ? 'none' : 'lax',
+        domain: isHostedProduction ? '.resolve.pub' : undefined,
         maxAge: 12 * 60 *60 * 1000 // 12 hours
     }
 };
