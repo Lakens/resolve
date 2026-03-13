@@ -29,6 +29,8 @@ const getRepositoriesRoute = await import('./api/getRepositories.js');
 const listNotebooksRoute = await import('./api/listNotebooks.js');
 const bibliographyRoute = await import('./api/bibliography.js');
 const collaborationRoute = await import('./api/collaboration.js');
+const fileHistoryRoute = await import('./api/fileHistory.js');
+const fileAtCommitRoute = await import('./api/fileAtCommit.js');
 
 const app = express();
 
@@ -174,6 +176,8 @@ app.use('/api/repositories', getRepositoriesRoute.default);
 app.use('/api/listNotebooks', listNotebooksRoute.default);
 app.use('/api/bibliography', bibliographyRoute.default);
 app.use('/api/collaboration', collaborationRoute.default);
+app.use('/api/fileHistory', fileHistoryRoute.default);
+app.use('/api/fileAtCommit', fileAtCommitRoute.default);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

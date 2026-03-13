@@ -18,7 +18,7 @@ import { zoteroPickReference } from '../../utils/api';
 import bibtexParse from 'bibtex-parser-js';
 import { formatApaInText } from '../../utils/apaUtils';
 
-const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, referenceManager, showPreview, onTogglePreview }) => {
+const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, referenceManager, showPreview, onTogglePreview, showDiff, onToggleDiff }) => {
   const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
@@ -443,6 +443,15 @@ const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, refer
         >
           {trackChangesEnabled ? <FaToggleOn /> : <FaToggleOff />}
           Track Changes
+        </button>
+
+        {/* Diff */}
+        <button
+          className={`tb-action-btn${showDiff ? ' tb-action-btn--active' : ''}`}
+          onClick={onToggleDiff}
+          title="Compare versions"
+        >
+          Diff
         </button>
 
         {/* Preview */}

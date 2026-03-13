@@ -130,6 +130,27 @@ export const saveNotebook = async (content, path, repository, commitMessage) => 
   }
 };
 
+// Diff / version history API functions
+export const getFileHistory = async (path, repository) => {
+  try {
+    const response = await api.get('/api/fileHistory', { params: { path, repository } });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch file history:', error);
+    throw error;
+  }
+};
+
+export const getFileAtCommit = async (path, repository, sha) => {
+  try {
+    const response = await api.get('/api/fileAtCommit', { params: { path, repository, sha } });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch file at commit:', error);
+    throw error;
+  }
+};
+
 // Collaboration API functions
 export const sendCollaborationInvite = async (username, email, repository, filePath) => {
   try {

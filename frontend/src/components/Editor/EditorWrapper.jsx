@@ -28,6 +28,7 @@ import InlineMath from '../../utils/InlineMath/inlineMath';
 import { formatApaReference } from '../../utils/apaUtils';
 import { LanguageToolExtension } from './LanguageToolExtension';
 import { LanguageToolPopover } from './LanguageToolPopover';
+import DiffViewer from './DiffViewer';
 
 const ReferencesList = ({ references }) => {
   if (!references || references.length === 0) return null;
@@ -67,6 +68,7 @@ const EditorWrapper = ({
   const { isAuthenticated } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showDiff, setShowDiff] = useState(false);
   const [notebooks, setNotebooks] = useState([]);
   const [error, setError] = useState(null);
   const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
@@ -342,7 +344,9 @@ const EditorWrapper = ({
             filePath={filePath}
             referenceManager={referenceManager}
             showPreview={showPreview}
-            onTogglePreview={() => setShowPreview(v => !v)}
+            onTogglePreview={() => { setShowPreview(v => !v); setShowDiff(false); }}
+            showDiff={showDiff}
+            onToggleDiff={() => { setShowDiff(v => !v); setShowPreview(false); }}
           />
         )}
       </header>
@@ -369,8 +373,9 @@ const EditorWrapper = ({
                   </div>
                 </div>
               </div>
-              {showPreview && <PreviewPane editor={editor} references={references || referenceManager?.getReferences()} />}
-              {!showPreview && editor && <CommentsSidebar editor={editor} />}
+              {showDiff    && <DiffViewer editor={editor} selectedRepo={selectedRepo} filePath={filePath} />}
+              {showPreview && !showDiff && <PreviewPane editor={editor} references={references || referenceManager?.getReferences()} />}
+              {!showPreview && !showDiff && editor && <CommentsSidebar editor={editor} />}
             </div>
           </div>
         )}
