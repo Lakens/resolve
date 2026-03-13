@@ -20,7 +20,7 @@ Setting up QuartoReview takes about 10 minutes and has four parts:
 
 1. **Install Node.js** — the runtime that powers the app build (one-time)
 2. **Install the app's dependencies** — download the desktop, backend, and frontend packages (one-time)
-3. **Configure GitHub access** — either add a personal access token or register a GitHub OAuth app
+3. **Connect GitHub** — use the in-app onboarding flow to authorize QuartoReview with your own GitHub account
 4. **Launch the desktop app** — QuartoReview runs as a standalone macOS application
 
 ---
@@ -51,37 +51,33 @@ The script checks that Node.js is installed and downloads the desktop, backend, 
 
 ---
 
-## Step 3 — Configure GitHub access
+## Step 3 — Connect GitHub
 
-On first launch, QuartoReview creates this file automatically:
+On first launch, QuartoReview opens an in-app GitHub setup dialog automatically if the app has not been configured yet.
 
-`~/Library/Application Support/QuartoReview/.env`
+You can connect GitHub in two ways:
 
-You can configure GitHub in one of two ways.
+### Option A — Personal access token (fastest for a local install)
 
-### Option A — Personal access token (simplest for a local install)
+This is the simplest route for a single-user desktop install.
 
-Paste this into `~/Library/Application Support/QuartoReview/.env`:
+1. In QuartoReview, click **"Connect GitHub"**
+2. Choose **"Personal token"**
+3. Click **"Open GitHub token page"**
+4. Create a token with repository access on your own GitHub account
+5. Paste the token into QuartoReview
+6. Click **"Save token and sign in"**
 
-```
-SESSION_SECRET=any_long_random_string_you_make_up
-GITHUB_TOKEN=your_repo_scoped_github_token
-```
+QuartoReview validates the token and stores it locally on that Mac.
 
-With a token in place, QuartoReview starts already authenticated on that Mac.
+### Option B — GitHub OAuth App (keeps the explicit authorization flow)
 
-### Option B — GitHub OAuth App (keeps the login button flow)
+Use this if you want GitHub to show an explicit app authorization screen when signing in.
 
-QuartoReview uses GitHub to store your files and to verify who you are. To make the **"Continue with GitHub"** button work, register QuartoReview as an "OAuth App" in your GitHub account.
-
-**Why is this needed?** GitHub requires any app that reads or writes repositories on your behalf to be registered. This is what creates the secure login flow.
-
-### 3a — Create the OAuth App
-
-1. Go to https://github.com/settings/developers
-2. Click **"OAuth Apps"** in the left sidebar
-3. Click **"New OAuth App"**
-4. Fill in the form exactly as shown:
+1. In QuartoReview, click **"Connect GitHub"**
+2. Choose **"GitHub OAuth app"**
+3. Click **"Open GitHub OAuth settings"**
+4. Create a GitHub OAuth app on your own GitHub account with these values:
 
    | Field | Value |
    |-------|-------|
@@ -89,25 +85,19 @@ QuartoReview uses GitHub to store your files and to verify who you are. To make 
    | Homepage URL | `http://localhost:3001` |
    | Authorization callback URL | `http://localhost:3001/api/auth/callback` |
 
-5. Click **"Register application"**
-6. On the next page, copy the **Client ID**
-7. Click **"Generate a new client secret"**, then copy the **Client Secret**
+5. Copy the **Client ID** and **Client Secret** into the QuartoReview setup dialog
+6. Leave the default redirect URI as `http://localhost:3001/api/auth/callback`
+7. Click **"Save and continue to GitHub"**
 
-### 3b — Save your credentials
+GitHub will then show the standard authorization page for your OAuth app, and you sign in with your own GitHub account.
 
-Paste the following into `~/Library/Application Support/QuartoReview/.env`:
+### Advanced option — edit the local config file manually
 
-```
-SESSION_SECRET=any_long_random_string_you_make_up
-GITHUB_CLIENT_ID=paste_your_client_id_here
-GITHUB_CLIENT_SECRET=paste_your_client_secret_here
-REDIRECT_URI=http://localhost:3001/api/auth/callback
-```
+If needed, QuartoReview stores its local desktop configuration here:
 
-Replace the two `paste_your_…` values with what you copied in step 3a.
-For `SESSION_SECRET`, invent any long string — for example: `mySecretKey12345abcdef`.
+`~/Library/Application Support/QuartoReview/.env`
 
-This `.env` file stays on your computer only.
+Most users should not need to edit this file directly, because the app now manages it through the GUI onboarding flow.
 
 ---
 
@@ -122,12 +112,12 @@ chmod +x start.sh
 
 This builds the frontend, starts the embedded backend, and opens the Electron desktop app.
 
-**To log in with OAuth:**
+**First launch behavior:**
 
-1. Click **"Continue with GitHub"** in the desktop app
-2. GitHub will ask you to authorize QuartoReview — click **"Authorize"**
-3. You will be sent back to QuartoReview, now logged in
-4. Select a repository from the dropdown, then select a `.qmd` file to open it
+1. QuartoReview opens
+2. If GitHub has not been configured yet, the app shows the setup dialog automatically
+3. Choose either **"Personal token"** or **"GitHub OAuth app"**
+4. Complete the setup flow and continue into the editor
 
 To build a distributable macOS app bundle and disk image, run:
 
@@ -154,11 +144,11 @@ Once ready:
 
 ## Troubleshooting
 
-**"Continue with GitHub" does nothing or shows an error**
-→ Check `~/Library/Application Support/QuartoReview/.env` and verify that `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `REDIRECT_URI` match your GitHub OAuth app exactly. Restart the desktop app after editing the file.
+**The GitHub setup dialog appears, but sign-in still fails**
+→ If you used a personal access token, make sure the token has repository access. If you used OAuth, make sure the client ID, client secret, and redirect URI match your GitHub OAuth app exactly.
 
 **The app opens but I can't see any repositories**
-→ Make sure you clicked "Login with GitHub" and completed the GitHub authorization. Repositories only appear after login. If you just created a GitHub account, create at least one repository on GitHub first.
+→ Make sure you completed the in-app GitHub setup flow successfully. Repositories only appear after authentication. If you just created a GitHub account, create at least one repository on GitHub first.
 
 > **Need help?** Submit issues at [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview).
 
