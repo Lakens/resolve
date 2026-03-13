@@ -92,30 +92,6 @@ const EditorWrapper = ({
     return subscribePackageStatus(setPkgStatus);
   }, []);
 
-  const handleRenderInlineR = useCallback(async () => {
-    if (!editor || isRenderingInlineR) return;
-    setIsRenderingInlineR(true);
-    try {
-      // Collect unique inline R expressions from all text nodes in the doc
-      const exprs = new Set();
-      const re = /`r\s+([^`]+?)`/g;
-      editor.state.doc.descendants(node => {
-        if (!node.isText) return;
-        re.lastIndex = 0;
-        let m;
-        while ((m = re.exec(node.text)) !== null) exprs.add(m[1].trim());
-      });
-      if (exprs.size === 0) return;
-      await evaluateInlineExpressions([...exprs]);
-      // Snapshot the updated cache into React state so PreviewPane re-renders
-      setInlineRCache(new Map(getInlineRCache()));
-      // Force the ProseMirror decoration plugin to rebuild with fresh values
-      editor.view.dispatch(editor.view.state.tr.setMeta('inlineRUpdated', true));
-    } finally {
-      setIsRenderingInlineR(false);
-    }
-  }, [editor, isRenderingInlineR]);
-
   useEffect(() => {
     return subscribeFileStatus(setFileStatus);
   }, []);
@@ -177,6 +153,27 @@ const EditorWrapper = ({
     editor.chain().focus().deleteRange({ from: ltMatch.from, to: ltMatch.to }).insertContentAt(ltMatch.from, replacement).run();
     handleLtDismiss();
   }, [editor, ltMatch, handleLtDismiss]);
+
+  const handleRenderInlineR = useCallback(async () => {
+    if (!editor || isRenderingInlineR) return;
+    setIsRenderingInlineR(true);
+    try {
+      const exprs = new Set();
+      const re = /`r\s+([^`]+?)`/g;
+      editor.state.doc.descendants(node => {
+        if (!node.isText) return;
+        re.lastIndex = 0;
+        let m;
+        while ((m = re.exec(node.text)) !== null) exprs.add(m[1].trim());
+      });
+      if (exprs.size === 0) return;
+      await evaluateInlineExpressions([...exprs]);
+      setInlineRCache(new Map(getInlineRCache()));
+      editor.view.dispatch(editor.view.state.tr.setMeta('inlineRUpdated', true));
+    } finally {
+      setIsRenderingInlineR(false);
+    }
+  }, [editor, isRenderingInlineR]);
 
   const onToggleTrackChanges = useCallback(() => {
     if (!editor) return;
