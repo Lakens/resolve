@@ -8,6 +8,7 @@
   border-left: 1px solid var(--color-border);
   background: var(--color-surface);
   overflow: hidden;
+  align-self: stretch;
 }
 
 .diff-viewer-toolbar {

@@ -249,15 +249,16 @@ function CodeCellNodeView({ node, editor, getPos }) {
           }
         }
 
-        // Persist outputs back onto the TipTap node
+        // Persist outputs back onto the TipTap node.
+        // Mark with trackManualChanged so TrackChanges ignores this transaction.
         const pos = getPos();
         if (typeof pos === 'number') {
-          editor.view.dispatch(
-            editor.view.state.tr.setNodeMarkup(pos, undefined, {
-              ...node.attrs,
-              outputs: newOutputs,
-            })
-          );
+          const tr = editor.view.state.tr.setNodeMarkup(pos, undefined, {
+            ...node.attrs,
+            outputs: newOutputs,
+          });
+          tr.setMeta('trackManualChanged', true);
+          editor.view.dispatch(tr);
         }
       } finally {
         await shelter.purge();

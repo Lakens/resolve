@@ -6,10 +6,10 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3001 "') do taskkill /F /PI
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5173 "') do taskkill /F /PID %%a >nul 2>&1
 
 echo Starting backend...
-start "Resolve Backend" cmd /k "cd /d "%~dp0backend" && npm start"
+wscript "%~dp0run_hidden.vbs" "cmd /c cd /d ""%~dp0backend"" && npm start"
 
 echo Starting frontend...
-start "Resolve Frontend" cmd /k "cd /d "%~dp0frontend" && npm start"
+wscript "%~dp0run_hidden.vbs" "cmd /c cd /d ""%~dp0frontend"" && npm start"
 
 echo.
 echo Both servers are starting.

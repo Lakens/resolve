@@ -58,9 +58,24 @@ function applyCitations(html, refMap) {
   return { html: replaced, citedKeys };
 }
 
-function buildPreviewHtml(cells, codeCellOutputs, refMap) {
+/**
+ * Replace `r expr` inline R patterns in a markdown text string with
+ * evaluated values from the cache, before the text is converted to HTML.
+ */
+function applyInlineR(text, cache) {
+  if (!cache || cache.size === 0) return text;
+  return text.replace(/`r\s+([^`]+?)`/g, (match, expr) => {
+    const cached = cache.get(expr.trim());
+    if (!cached) return match;
+    if (cached.error) return `[R error: ${cached.error}]`;
+    return cached.value ?? match;
+  });
+}
+
+function buildPreviewHtml(cells, codeCellOutputs, refMap, inlineRCache) {
   let html = '';
   let codeIndex = 0;
+  const allCitedKeys = [];
   for (const cell of cells) {
     if (cell.type === 'raw' && cell.isYamlHeader) {
       const meta = cell.parsedYaml || {};
@@ -78,7 +93,12 @@ function buildPreviewHtml(cells, codeCellOutputs, refMap) {
         html += `<div class="preview-abstract"><strong>Abstract</strong><p>${escapeHtml(meta.abstract)}</p></div>`;
       }
     } else if (cell.type === 'markdown') {
-      html += markdownToHtml(cell.content);
+      // Apply inline R and citations on raw markdown BEFORE markdownToHtml,
+      // so markdown-it doesn't consume [@key] tokens before applyCitations sees them.
+      let content = inlineRCache ? applyInlineR(cell.content, inlineRCache) : cell.content;
+      const { html: cited, citedKeys: cellCitedKeys } = applyCitations(content, refMap);
+      cellCitedKeys.forEach(k => { if (!allCitedKeys.includes(k)) allCitedKeys.push(k); });
+      html += markdownToHtml(cited);
     } else if (cell.type === 'code') {
       const outputs = codeCellOutputs[codeIndex] || [];
       codeIndex++;
@@ -89,14 +109,11 @@ function buildPreviewHtml(cells, codeCellOutputs, refMap) {
     }
   }
 
-  // Replace [@key] citation patterns and collect cited keys
-  const { html: withCitations, citedKeys } = applyCitations(html, refMap);
-
   // Append APA reference list if any citations were found
   let refHtml = '';
-  if (citedKeys.length > 0) {
+  if (allCitedKeys.length > 0) {
     refHtml = '<hr class="preview-refs-divider"><h2 class="preview-refs-heading">References</h2><div class="preview-refs-list">';
-    for (const key of citedKeys) {
+    for (const key of allCitedKeys) {
       const entry = refMap[key];
       if (entry) {
         refHtml += `<p class="preview-ref-entry">${formatApaReference(entry)}</p>`;
@@ -105,12 +122,22 @@ function buildPreviewHtml(cells, codeCellOutputs, refMap) {
     refHtml += '</div>';
   }
 
-  return withCitations + refHtml;
+  return html + refHtml;
 }
 
-export function PreviewPane({ editor, references }) {
+export function PreviewPane({ editor, references, inlineRCache, filePath }) {
   const containerRef = useRef(null);
   const [html, setHtml] = useState('');
+
+  const downloadHtml = () => {
+    const blob = new Blob([html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `preview-${(filePath || 'document').replace(/\//g, '-')}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     if (!editor) return;
@@ -136,7 +163,7 @@ export function PreviewPane({ editor, references }) {
           }
         }
 
-        setHtml(buildPreviewHtml(cells, codeCellOutputs, refMap));
+        setHtml(buildPreviewHtml(cells, codeCellOutputs, refMap, inlineRCache));
       } catch (_) {
         // silently ignore preview errors — the editor content may be mid-edit
       }
@@ -155,7 +182,7 @@ export function PreviewPane({ editor, references }) {
       editor.off('update', handler);
       clearTimeout(timeout);
     };
-  }, [editor, references]);
+  }, [editor, references, inlineRCache]);
 
   // After React sets the HTML, post-process math tokens with KaTeX
   useEffect(() => {
@@ -172,10 +199,19 @@ export function PreviewPane({ editor, references }) {
   }, [html]);
 
   return (
-    <div
-      className="preview-pane"
-      ref={containerRef}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <div className="preview-pane-wrapper">
+      <div className="preview-pane-toolbar">
+        {html && (
+          <button className="diff-download-btn" onClick={downloadHtml}>
+            ↓ Download HTML
+          </button>
+        )}
+      </div>
+      <div
+        className="preview-pane"
+        ref={containerRef}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </div>
   );
 }

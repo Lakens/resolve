@@ -463,19 +463,19 @@
   height: 100%;
   max-width: 1600px;
   margin: 0 auto;
+  overflow: hidden;
+  align-items: stretch;
 }
 
 .editor-container {
   flex: 1;
   position: relative;
-  overflow: auto;
+  overflow-y: auto;
   background: rgb(247, 247, 247);
-  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
   border-radius: 8px;
-  height: fit-content;
   z-index: 1;
 }
 
@@ -497,6 +497,30 @@
   max-width: 1200px;
   margin: 0 auto;
   background: rgb(255, 255, 255);
+}
+
+.source-editor {
+  display: block;
+  width: 100%;
+  min-height: 70vh;
+  padding: 1.5rem;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-primary, #1a1a1a);
+  background: var(--editor-bg, #fafafa);
+  border: none;
+  outline: none;
+  resize: none;
+  box-sizing: border-box;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+[data-theme="dark"] .source-editor {
+  color: var(--text-primary, #e0e0e0);
+  background: var(--editor-bg, #1e1e1e);
 }
 
 .notification {
@@ -569,6 +593,23 @@
 }
 .pkg-install-banner__close:hover { opacity: 1; }
 
+/* Inline R expression decorations */
+.inline-r-expr {
+  background: rgba(255, 200, 50, 0.25);
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.9em;
+  padding: 0 2px;
+  cursor: default;
+}
+.inline-r-expr--evaluated {
+  background: rgba(60, 180, 80, 0.2);
+}
+.inline-r-expr--error {
+  background: rgba(220, 50, 50, 0.15);
+  text-decoration: underline wavy red;
+}
+
 .citation {
   background-color: #f0f0f0;
   border-radius: 3px;
@@ -628,6 +669,24 @@
 }
 
 /* ── Preview pane ────────────────────────────────────────────────── */
+
+.preview-pane-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.preview-pane-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  flex-shrink: 0;
+}
 
 .preview-pane {
   flex: 1;

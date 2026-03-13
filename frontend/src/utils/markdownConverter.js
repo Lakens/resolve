@@ -296,7 +296,7 @@ turndownService.addRule('citation', {
     const referenceDetails = node.getAttribute('data-reference-details') || '';
 
     if (inBrackets) {
-      return `[${prefix} @${citationKey}${locator ? `, ${locator}` : ''}${suffix ? ` ${suffix}` : ''}]`;
+      return `[${prefix ? prefix + ' ' : ''}@${citationKey}${locator ? `, ${locator}` : ''}${suffix ? ` ${suffix}` : ''}]`;
     } else {
       return `@${citationKey}`;
     }
