@@ -258,7 +258,7 @@ function App() {
     }
   };
 
-  const onSaveFile = async (editor) => {
+  const onSaveFile = async (editor, commitMessage) => {
     if (!editor) {
       console.warn('No editor instance available.');
       return;
@@ -275,14 +275,14 @@ function App() {
     try {
       if (filePath.endsWith('.qmd')) {
         const qmdString = tiptapDocToQmd(editor);
-        await saveQmdToGitHub(qmdString, filePath, selectedRepo);
+        await saveQmdToGitHub(qmdString, filePath, selectedRepo, commitMessage);
       } else {
         if (!ipynb) {
           console.warn('No ipynb file available.');
           return;
         }
         const newIpynb = tiptapDocToIpynb(editor, ipynb);
-        await saveToGitHub(newIpynb, filePath, selectedRepo, user);
+        await saveToGitHub(newIpynb, filePath, selectedRepo, user, commitMessage);
       }
 
       setSaveMessage('File updated successfully');

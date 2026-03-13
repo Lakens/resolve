@@ -1,0 +1,107 @@
+/* ── Diff viewer panel ───────────────────────────────────────────────────── */
+
+.diff-viewer {
+  display: flex;
+  flex-direction: column;
+  width: 480px;
+  min-width: 380px;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.diff-viewer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.diff-mode-toggle {
+  display: flex;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm, 5px);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.diff-mode-btn {
+  padding: 3px 9px;
+  font-size: 0.75rem;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.diff-mode-btn + .diff-mode-btn {
+  border-left: 1px solid var(--color-border-strong);
+}
+
+.diff-mode-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.diff-viewer-label {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.diff-commit-select {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm, 5px);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.diff-download-btn {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm, 5px);
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.diff-download-btn:hover { background: var(--color-primary-hover); }
+
+.diff-iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+
+.diff-loading,
+.diff-error,
+.diff-unsupported {
+  padding: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.diff-error { color: #c0392b; }
+
+/* ── Dark mode ───────────────────────────────────────────────────────────── */
+
+[data-theme="dark"] .diff-iframe {
+  background: #1e1e1e;
+  filter: invert(1) hue-rotate(180deg);
+}
