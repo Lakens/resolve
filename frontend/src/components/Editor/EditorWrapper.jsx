@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaSun, FaMoon, FaEdit, FaShare } from 'react-icons/fa';
 import ShareModal from '../Share/ShareModal';
 import { useAuth } from '../../contexts/AuthContext';
-import { subscribePackageStatus, subscribeFileStatus, installPackagesForQmd, syncFilesForQmd } from '../../utils/webRSingleton';
+import { subscribePackageStatus, subscribeFileStatus, installPackagesForQmd, syncFilesForQmd, evaluateInlineExpressions, getInlineRCache } from '../../utils/webRSingleton';
 import { fetchNotebooksInRepo, fetchRawFile } from '../../utils/api';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -22,6 +22,7 @@ import { CodeCell } from '../../cells/codeCell';
 import { ipynbToTiptapDoc } from '../../utils/notebookConversionUtils';
 import { qmdToTiptapDoc } from '../../utils/quartoConversionUtils';
 import EditorToolbar from './EditorToolbar';
+import { InlineRExtension } from './InlineRDecoration';
 import { CommentsSidebar } from '../Comments/CommentsSidebar';
 import { PreviewPane } from './PreviewPane';
 import LoginButton from '../Auth/LoginButton';
@@ -78,6 +79,8 @@ const EditorWrapper = ({
   const [fileStatus, setFileStatus] = useState({ phase: 'idle', current: null, synced: 0, total: 0, skipped: [] });
   const [pkgBannerDismissed, setPkgBannerDismissed] = useState(false);
   const [fileBannerDismissed, setFileBannerDismissed] = useState(false);
+  const [inlineRCache, setInlineRCache] = useState(() => getInlineRCache());
+  const [isRenderingInlineR, setIsRenderingInlineR] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
@@ -88,6 +91,30 @@ const EditorWrapper = ({
   useEffect(() => {
     return subscribePackageStatus(setPkgStatus);
   }, []);
+
+  const handleRenderInlineR = useCallback(async () => {
+    if (!editor || isRenderingInlineR) return;
+    setIsRenderingInlineR(true);
+    try {
+      // Collect unique inline R expressions from all text nodes in the doc
+      const exprs = new Set();
+      const re = /`r\s+([^`]+?)`/g;
+      editor.state.doc.descendants(node => {
+        if (!node.isText) return;
+        re.lastIndex = 0;
+        let m;
+        while ((m = re.exec(node.text)) !== null) exprs.add(m[1].trim());
+      });
+      if (exprs.size === 0) return;
+      await evaluateInlineExpressions([...exprs]);
+      // Snapshot the updated cache into React state so PreviewPane re-renders
+      setInlineRCache(new Map(getInlineRCache()));
+      // Force the ProseMirror decoration plugin to rebuild with fresh values
+      editor.view.dispatch(editor.view.state.tr.setMeta('inlineRUpdated', true));
+    } finally {
+      setIsRenderingInlineR(false);
+    }
+  }, [editor, isRenderingInlineR]);
 
   useEffect(() => {
     return subscribeFileStatus(setFileStatus);
@@ -130,6 +157,7 @@ const EditorWrapper = ({
         onUpdate: handleCommentMarkUpdate
       }),
       CitationMark,
+      InlineRExtension,
       LanguageToolExtension.configure({
         onMatchClick: (match, event) => ltMatchClickRef.current?.(match, event),
       }),
@@ -438,6 +466,8 @@ const EditorWrapper = ({
             onTogglePreview={() => { setShowPreview(v => !v); setShowDiff(false); }}
             showDiff={showDiff}
             onToggleDiff={() => { setShowDiff(v => !v); setShowPreview(false); }}
+            onRenderInlineR={handleRenderInlineR}
+            isRenderingInlineR={isRenderingInlineR}
           />
         )}
       </header>
@@ -465,7 +495,7 @@ const EditorWrapper = ({
                 </div>
               </div>
               {showDiff    && <DiffViewer editor={editor} selectedRepo={selectedRepo} filePath={filePath} />}
-              {showPreview && !showDiff && <PreviewPane editor={editor} references={references || referenceManager?.getReferences()} />}
+              {showPreview && !showDiff && <PreviewPane editor={editor} references={references || referenceManager?.getReferences()} inlineRCache={inlineRCache} />}
               {!showPreview && !showDiff && editor && <CommentsSidebar editor={editor} />}
             </div>
           </div>

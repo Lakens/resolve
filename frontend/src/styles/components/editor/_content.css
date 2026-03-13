@@ -569,6 +569,23 @@
 }
 .pkg-install-banner__close:hover { opacity: 1; }
 
+/* Inline R expression decorations */
+.inline-r-expr {
+  background: rgba(255, 200, 50, 0.25);
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.9em;
+  padding: 0 2px;
+  cursor: default;
+}
+.inline-r-expr--evaluated {
+  background: rgba(60, 180, 80, 0.2);
+}
+.inline-r-expr--error {
+  background: rgba(220, 50, 50, 0.15);
+  text-decoration: underline wavy red;
+}
+
 .citation {
   background-color: #f0f0f0;
   border-radius: 3px;

@@ -58,7 +58,21 @@ function applyCitations(html, refMap) {
   return { html: replaced, citedKeys };
 }
 
-function buildPreviewHtml(cells, codeCellOutputs, refMap) {
+/**
+ * Replace `r expr` inline R patterns in a markdown text string with
+ * evaluated values from the cache, before the text is converted to HTML.
+ */
+function applyInlineR(text, cache) {
+  if (!cache || cache.size === 0) return text;
+  return text.replace(/`r\s+([^`]+?)`/g, (match, expr) => {
+    const cached = cache.get(expr.trim());
+    if (!cached) return match;
+    if (cached.error) return `[R error: ${cached.error}]`;
+    return cached.value ?? match;
+  });
+}
+
+function buildPreviewHtml(cells, codeCellOutputs, refMap, inlineRCache) {
   let html = '';
   let codeIndex = 0;
   for (const cell of cells) {
@@ -78,7 +92,8 @@ function buildPreviewHtml(cells, codeCellOutputs, refMap) {
         html += `<div class="preview-abstract"><strong>Abstract</strong><p>${escapeHtml(meta.abstract)}</p></div>`;
       }
     } else if (cell.type === 'markdown') {
-      html += markdownToHtml(cell.content);
+      const content = inlineRCache ? applyInlineR(cell.content, inlineRCache) : cell.content;
+      html += markdownToHtml(content);
     } else if (cell.type === 'code') {
       const outputs = codeCellOutputs[codeIndex] || [];
       codeIndex++;
@@ -108,7 +123,7 @@ function buildPreviewHtml(cells, codeCellOutputs, refMap) {
   return withCitations + refHtml;
 }
 
-export function PreviewPane({ editor, references }) {
+export function PreviewPane({ editor, references, inlineRCache }) {
   const containerRef = useRef(null);
   const [html, setHtml] = useState('');
 
@@ -136,7 +151,7 @@ export function PreviewPane({ editor, references }) {
           }
         }
 
-        setHtml(buildPreviewHtml(cells, codeCellOutputs, refMap));
+        setHtml(buildPreviewHtml(cells, codeCellOutputs, refMap, inlineRCache));
       } catch (_) {
         // silently ignore preview errors — the editor content may be mid-edit
       }
@@ -155,7 +170,7 @@ export function PreviewPane({ editor, references }) {
       editor.off('update', handler);
       clearTimeout(timeout);
     };
-  }, [editor, references]);
+  }, [editor, references, inlineRCache]);
 
   // After React sets the HTML, post-process math tokens with KaTeX
   useEffect(() => {

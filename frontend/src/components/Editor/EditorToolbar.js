@@ -17,7 +17,7 @@ import { zoteroPickReference } from '../../utils/api';
 import bibtexParse from 'bibtex-parser-js';
 import { formatApaInText } from '../../utils/apaUtils';
 
-const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview, onTogglePreview, showDiff, onToggleDiff }) => {
+const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview, onTogglePreview, showDiff, onToggleDiff, onRenderInlineR, isRenderingInlineR }) => {
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
   const [showBgColorMenu, setShowBgColorMenu] = useState(false);
@@ -404,6 +404,14 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
         {/* R chunk + Cite pills */}
         <button className="tb-insert-btn" onClick={handleInsertRChunk} title="Insert R code chunk">
           <BiCodeBlock /> R
+        </button>
+        <button
+          className="tb-insert-btn"
+          onClick={onRenderInlineR}
+          disabled={isRenderingInlineR}
+          title="Evaluate all `r expr` inline R expressions and show results in preview"
+        >
+          {isRenderingInlineR ? '…' : '`r`'}
         </button>
         <button
           className="tb-insert-btn"

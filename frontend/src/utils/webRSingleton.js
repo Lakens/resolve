@@ -367,6 +367,46 @@ export async function syncFilesForQmd(qmdContent, qmdFilePath, repository, fetch
   });
 }
 
+// ── Inline R evaluation ───────────────────────────────────────────────────────
+
+// Module-level cache: expr → { value: string, error: string|null }
+let _inlineRCache = new Map();
+
+/** Return the current inline-R evaluation cache (read-only snapshot). */
+export function getInlineRCache() {
+  return _inlineRCache;
+}
+
+/**
+ * Evaluate an array of unique inline R expressions via WebR and cache results.
+ * Each expression is evaluated as `as.character(<expr>)` so numbers, booleans,
+ * and vectors are converted to readable strings.
+ *
+ * Returns a Map of expr → { value: string|null, error: string|null }.
+ */
+export async function evaluateInlineExpressions(expressions) {
+  if (!expressions || expressions.length === 0) return new Map();
+
+  const webR = await getWebR();
+  const results = new Map();
+
+  for (const expr of expressions) {
+    try {
+      const rObj = await webR.evalR(`as.character(${expr})`);
+      const arr = await rObj.toArray();
+      await rObj.destroy();
+      results.set(expr, { value: arr.join(' '), error: null });
+    } catch (err) {
+      const msg = (err.message || 'R error').replace(/^Error in eval\(.*?\) : /, '');
+      results.set(expr, { value: null, error: msg });
+    }
+  }
+
+  // Merge into the persistent cache
+  _inlineRCache = new Map([..._inlineRCache, ...results]);
+  return results;
+}
+
 // ── Image utility ─────────────────────────────────────────────────────────────
 
 /**
