@@ -1,6 +1,6 @@
-# Resolve — WYSIWYG Quarto Markdown Editor
+# QuartoReview — WYSIWYG Quarto Markdown Editor
 
-Resolve is a browser-based editor for `.qmd` (Quarto Markdown) files stored on GitHub. It lets you write, edit, and run R code chunks in the browser — no local R installation needed — and saves everything back to your GitHub repository.
+QuartoReview is a browser-based editor for `.qmd` (Quarto Markdown) files stored on GitHub. It lets you write, edit, and run R code chunks in the browser — no local R installation needed — and saves everything back to your GitHub repository.
 
 ---
 
@@ -16,11 +16,11 @@ Resolve is a browser-based editor for `.qmd` (Quarto Markdown) files stored on G
 
 ## Overview of the setup
 
-Setting up Resolve takes about 10 minutes and has four parts:
+Setting up QuartoReview takes about 10 minutes and has four parts:
 
 1. **Install Node.js** — the runtime that powers the app (one-time)
-2. **Install the app's dependencies** — download the libraries Resolve needs (one-time, automated)
-3. **Connect to GitHub** — register Resolve as an app in your GitHub account so the "Login with GitHub" button works (one-time, ~5 minutes)
+2. **Install the app's dependencies** — download the libraries QuartoReview needs (one-time, automated)
+3. **Connect to GitHub** — register QuartoReview as an app in your GitHub account so the "Login with GitHub" button works (one-time, ~5 minutes)
 4. **Launch and log in** — double-click to start, then click "Login with GitHub" in your browser
 
 ---
@@ -38,8 +38,8 @@ Choose the **LTS** version. Accept all defaults during installation.
 
 **Get the code:**
 
-- **Option A — Download ZIP** (easiest): Go to https://github.com/Lakens/resolve, click the green **"Code"** button → **"Download ZIP"**, then extract it somewhere on your computer (Desktop or Documents is fine).
-- **Option B — Clone with git**: `git clone https://github.com/Lakens/resolve.git`
+- **Option A — Download ZIP** (easiest): Go to https://github.com/Lakens/QuartoReview, click the green **"Code"** button → **"Download ZIP"**, then extract it somewhere on your computer (Desktop or Documents is fine).
+- **Option B — Clone with git**: `git clone https://github.com/Lakens/QuartoReview.git`
 
 **Install dependencies** (one-time setup):
 
@@ -52,9 +52,9 @@ The script checks that Node.js is installed and downloads everything the app nee
 
 ---
 
-## Step 3 — Connect Resolve to GitHub (enables login)
+## Step 3 — Connect QuartoReview to GitHub (enables login)
 
-Resolve uses GitHub to store your files and to verify who you are. To make the **"Login with GitHub"** button work, you need to register Resolve as an "OAuth App" in your GitHub account. This is a one-time step that takes about 5 minutes.
+QuartoReview uses GitHub to store your files and to verify who you are. To make the **"Login with GitHub"** button work, you need to register QuartoReview as an "OAuth App" in your GitHub account. This is a one-time step that takes about 5 minutes.
 
 **Why is this needed?** GitHub requires any app that reads or writes repositories on your behalf to be registered. This is what creates the secure login flow.
 
@@ -67,7 +67,7 @@ Resolve uses GitHub to store your files and to verify who you are. To make the *
 
    | Field | Value |
    |-------|-------|
-   | Application name | `Resolve` (or anything you like) |
+   | Application name | `QuartoReview` (or anything you like) |
    | Homepage URL | `http://localhost:5173` |
    | Authorization callback URL | `http://localhost:3001/api/auth/callback` |
 
@@ -107,8 +107,8 @@ The script opens two windows (backend and frontend) and opens your browser to `h
 **To log in:**
 
 1. Click **"Login with GitHub"** on the page
-2. GitHub will ask you to authorize Resolve — click **"Authorize"**
-3. You will be sent back to Resolve, now logged in
+2. GitHub will ask you to authorize QuartoReview — click **"Authorize"**
+3. You will be sent back to QuartoReview, now logged in
 4. Select a repository from the dropdown, then select a `.qmd` file to open it
 
 > **Don't see a "Login with GitHub" button?** Make sure both the backend and frontend windows are running (step 4 opens them automatically). If the button does nothing, check the [troubleshooting](#troubleshooting) section.
@@ -138,6 +138,8 @@ Once ready:
 **The app opens but I can't see any repositories**
 → Make sure you clicked "Login with GitHub" and completed the GitHub authorization. Repositories only appear after login. If you just created a GitHub account, create at least one repository on GitHub first.
 
+> **Need help?** Submit issues at [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview).
+
 **R code gives "there is no package called …"**
 → Wait for the blue "Installing R packages…" banner to disappear before running code. If the banner is gone and the error persists, reload the page.
 
@@ -152,7 +154,7 @@ Once ready:
 ## Project structure
 
 ```
-resolve/
+QuartoReview/
 ├── backend/              # Express.js API server (port 3001)
 │   ├── api/              # API routes (auth, files, bibliography, etc.)
 │   ├── middleware/        # Security middleware
@@ -175,3 +177,25 @@ resolve/
 ## License
 
 Elastic License v2 (ELv2) — see [LICENSE.md](LICENSE.md).
+
+---
+
+## Built on Resolve
+
+QuartoReview is a fork of [Resolve](https://github.com/MichelNivard/resolve) by Michel Nivard. The original Resolve provided the foundational architecture on which this project is built: the TipTap/ProseMirror editor core, GitHub OAuth authentication, `.ipynb` loading and saving, the Track Changes extension, the comment mark system, the basic citation mark, raw and code cell architecture, inline math rendering, and the comments sidebar and share modal.
+
+The following features were added in this fork by Daniel Lakens:
+
+- **QMD format support** — `.qmd` (Quarto Markdown) as the primary file format, including full round-trip conversion between QMD and the TipTap document model, and persistence of inline comments as HTML spans within QMD files
+- **Vite migration** — migrated the frontend from Create React App to Vite
+- **Live preview pane** — side-by-side rendered prose preview
+- **WebR in-browser R execution** — run R code chunks directly in the browser via WebAssembly, with `tidyverse`, `kableExtra`, and `palmerpenguins` pre-loaded; includes R plot and table rendering and automatic package installation
+- **Zotero citation picker** — integration with Zotero's Better BibTeX "Cite as You Write" API, with APA in-text and reference list formatting
+- **LanguageTool grammar and spell checking** — real-time grammar and spelling feedback via LanguageTool, with inline highlighting and one-click corrections
+- **Diff viewer** — compare any saved version against the current document ("Changes since this version") or view what changed within a specific commit ("Changes in this version"), with word-level highlighting
+- **Dark mode** — full dark theme with CSS variable overrides, toggled from the header
+- **Word count and unsaved-words nudge** — live word count in the status bar, with a header warning after 50 unsaved words
+- **Commit message dialog** — descriptive commit messages when saving to GitHub
+- **UI redesign** — unified header row with file controls, track changes toggle, share button, and dark mode toggle; orange pill-style toolbar buttons for R chunk insertion, citation, and diff
+
+Issues and contributions: [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview)
