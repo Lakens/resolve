@@ -4,7 +4,7 @@ import {
   FaListUl, FaListOl, FaQuoteRight, FaCode,
   FaPalette, FaFill, FaComment, FaUndo, FaRedo,
   FaTextHeight, FaHighlighter, FaImage,
-  FaTable, FaToggleOn, FaToggleOff, FaShare, FaBookOpen
+  FaTable, FaBookOpen
 } from 'react-icons/fa';
 import { BiCodeBlock } from 'react-icons/bi';
 import { MdFormatClear } from 'react-icons/md';
@@ -13,20 +13,17 @@ import { AiOutlineSplitCells, AiOutlineInsertRowBelow } from 'react-icons/ai';
 import { BsTable } from 'react-icons/bs';
 import '../../styles/components/editor/_toolbar.css';
 import { useAuth } from '../../contexts/AuthContext';
-import ShareModal from '../Share/ShareModal';
 import { zoteroPickReference } from '../../utils/api';
 import bibtexParse from 'bibtex-parser-js';
 import { formatApaInText } from '../../utils/apaUtils';
 
-const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, referenceManager, showPreview, onTogglePreview, showDiff, onToggleDiff }) => {
-  const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
+const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview, onTogglePreview, showDiff, onToggleDiff }) => {
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
   const [showBgColorMenu, setShowBgColorMenu] = useState(false);
   const [showFontFamilyMenu, setShowFontFamilyMenu] = useState(false);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isZoteroPicking, setIsZoteroPicking] = useState(false);
   const [showTableMenu, setShowTableMenu] = useState(false);
   const [tableMenuPos, setTableMenuPos] = useState({ top: 0, left: 0 });
@@ -75,22 +72,6 @@ const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, refer
   const handleBulletList = () => editor.chain().focus().toggleBulletList().run();
   const handleOrderedList = () => editor.chain().focus().toggleOrderedList().run();
 
-  // Track Changes toggle handler
-  const handleToggleTrackChanges = () => {
-    // Toggle the track change status using the command
-    editor.commands.toggleTrackChangeStatus();
-
-    // Get the current state of the TrackChangeExtension
-    const trackChangeExtension = editor.extensionManager.extensions.find(
-      ext => ext.name === 'trackchange'
-    );
-
-    // Check the current enabled status
-    const isTracking = trackChangeExtension?.options.enabled;
-
-    // Update the local state to reflect the current status
-    setTrackChangesEnabled(isTracking);
-  };
 
   const handleHighlight = () => editor.chain().focus().toggleHighlight().run();
 
@@ -435,19 +416,9 @@ const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, refer
 
         <div className="tb-sep" />
 
-        {/* Track Changes */}
+        {/* Diff pill */}
         <button
-          className={`tb-action-btn${trackChangesEnabled ? ' tb-action-btn--active' : ''}`}
-          onClick={handleToggleTrackChanges}
-          title="Track Changes"
-        >
-          {trackChangesEnabled ? <FaToggleOn /> : <FaToggleOff />}
-          Track Changes
-        </button>
-
-        {/* Diff */}
-        <button
-          className={`tb-action-btn${showDiff ? ' tb-action-btn--active' : ''}`}
+          className={`tb-insert-btn${showDiff ? ' tb-insert-btn--active' : ''}`}
           onClick={onToggleDiff}
           title="Compare versions"
         >
@@ -462,24 +433,7 @@ const EditorToolbar = ({ editor, onToggleComments, selectedRepo, filePath, refer
         >
           Preview
         </button>
-
-        {/* Share */}
-        <button
-          className="tb-action-btn"
-          onClick={() => setIsShareModalOpen(true)}
-          title="Share Document"
-        >
-          <FaShare /> Share
-        </button>
       </div>
-
-      {/* Modals */}
-      <ShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        repository={selectedRepo?.fullName}
-        filePath={filePath}
-      />
     </div>
   );
 };

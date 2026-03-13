@@ -104,6 +104,12 @@
 }
 .tb-insert-btn:hover { background: var(--color-primary); color: #fff; }
 .tb-insert-btn:disabled { opacity: 0.45; cursor: default; }
+.tb-insert-btn--active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+.tb-insert-btn--active:hover { background: var(--color-primary-hover); }
 
 /* ── Action buttons (Track Changes, Preview, Share) ─────────────────────── */
 

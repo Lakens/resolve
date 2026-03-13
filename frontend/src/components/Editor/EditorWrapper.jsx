@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaSun, FaMoon } from 'react-icons/fa';
+import { FaSun, FaMoon, FaEdit, FaShare } from 'react-icons/fa';
+import ShareModal from '../Share/ShareModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { subscribePackageStatus } from '../../utils/webRSingleton';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -75,6 +76,7 @@ const EditorWrapper = ({
   const [commentMarkKey, setCommentMarkKey] = useState(0);
   const [pkgStatus, setPkgStatus] = useState({ phase: 'idle', current: null, index: 0, total: 0 });
   const [darkMode, setDarkMode] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
@@ -83,10 +85,6 @@ const EditorWrapper = ({
   useEffect(() => {
     return subscribePackageStatus(setPkgStatus);
   }, []);
-
-  const handleTrackChangesToggle = (enabled) => {
-    setTrackChangesEnabled(enabled);
-  }
 
   const handleCommentMarkUpdate = () => {
     setCommentMarkKey((prev) => prev + 1);
@@ -144,6 +142,13 @@ const EditorWrapper = ({
     editor.chain().focus().deleteRange({ from: ltMatch.from, to: ltMatch.to }).insertContentAt(ltMatch.from, replacement).run();
     handleLtDismiss();
   }, [editor, ltMatch, handleLtDismiss]);
+
+  const onToggleTrackChanges = useCallback(() => {
+    if (!editor) return;
+    editor.commands.toggleTrackChangeStatus();
+    const ext = editor.extensionManager.extensions.find(e => e.name === 'trackchange');
+    setTrackChangesEnabled(ext?.options.enabled ?? false);
+  }, [editor]);
 
   // Attach referenceManager to editor when both are available
   useEffect(() => {
@@ -332,16 +337,31 @@ const EditorWrapper = ({
             title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             <span className="hdr-dark-icon">{darkMode ? <FaSun /> : <FaMoon />}</span>
-            <span className={`hdr-dark-track${darkMode ? ' is-dark' : ''}`}>
+            <span className={`hdr-dark-track${darkMode ? ' is-active' : ''}`}>
               <span className="hdr-dark-thumb" />
             </span>
+          </button>
+          <button
+            className="hdr-dark-toggle"
+            onClick={onToggleTrackChanges}
+            title={trackChangesEnabled ? 'Disable track changes' : 'Enable track changes'}
+          >
+            <span className="hdr-dark-icon"><FaEdit /></span>
+            <span className={`hdr-dark-track${trackChangesEnabled ? ' is-active' : ''}`}>
+              <span className="hdr-dark-thumb" />
+            </span>
+          </button>
+          <button
+            className="hdr-btn hdr-share-btn"
+            onClick={() => setIsShareModalOpen(true)}
+            title="Share document"
+          >
+            <FaShare /> Share
           </button>
         </div>
         {editor && (
           <EditorToolbar
             editor={editor}
-            selectedRepo={selectedRepo}
-            filePath={filePath}
             referenceManager={referenceManager}
             showPreview={showPreview}
             onTogglePreview={() => { setShowPreview(v => !v); setShowDiff(false); }}
@@ -380,6 +400,13 @@ const EditorWrapper = ({
           </div>
         )}
       </main>
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        repository={selectedRepo?.fullName}
+        filePath={filePath}
+      />
 
       <LanguageToolPopover
         match={ltMatch}

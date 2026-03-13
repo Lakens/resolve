@@ -136,6 +136,13 @@ body {
   border-color: var(--color-border-strong);
 }
 
+.hdr-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 14px;
+}
+
 .hdr-btn:active {
   background: var(--color-primary-soft);
   border-color: var(--color-primary);
@@ -280,10 +287,6 @@ body {
   flex-shrink: 0;
 }
 
-.hdr-dark-track.is-dark {
-  background: var(--color-primary);
-}
-
 .hdr-dark-thumb {
   position: absolute;
   top: 2px;
@@ -296,7 +299,14 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-.hdr-dark-track.is-dark .hdr-dark-thumb {
+/* .is-dark and .is-active are both valid active classes for any header toggle */
+.hdr-dark-track.is-dark,
+.hdr-dark-track.is-active {
+  background: var(--color-primary);
+}
+
+.hdr-dark-track.is-dark .hdr-dark-thumb,
+.hdr-dark-track.is-active .hdr-dark-thumb {
   transform: translateX(13px);
 }
 
