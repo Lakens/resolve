@@ -41,8 +41,11 @@ router.get('/', async (req, res) => {
     // Decode content from base64
     const content = Buffer.from(response.data.content, 'base64').toString('utf8');
 
-    // Handle .qmd files differently — return raw text
-    if (sanitizedPath.endsWith('.qmd')) {
+    // Handle text-based markup files — return raw text
+    if (sanitizedPath.endsWith('.qmd') ||
+        sanitizedPath.endsWith('.Rmd') ||
+        sanitizedPath.endsWith('.rmd') ||
+        sanitizedPath.endsWith('.md')) {
       return res.json({ qmdContent: content, fileType: 'qmd' });
     }
 

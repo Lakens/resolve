@@ -437,7 +437,7 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
         <button
           className={`tb-action-btn${showSource ? ' tb-action-btn--active' : ''}`}
           onClick={onToggleSource}
-          title="Toggle raw QMD source"
+          title="Toggle raw source"
         >
           Source
         </button>

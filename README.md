@@ -1,12 +1,12 @@
-# QuartoReview — macOS Desktop Quarto Editor
+# QuartoReview — macOS Desktop Quarto / R Markdown Editor
 
-QuartoReview is a local macOS desktop app for editing `.qmd` (Quarto Markdown) files stored on GitHub. The React frontend and Express backend are bundled together inside an Electron shell, so you launch one app instead of managing separate browser and server processes.
+QuartoReview is a local macOS desktop app for editing `.qmd` (Quarto Markdown), `.Rmd` (R Markdown), and `.md` (Markdown) files stored on GitHub. The React frontend and Express backend are bundled together inside an Electron shell, so you launch one app instead of managing separate browser and server processes.
 
 ---
 
 ## What it does
 
-- Edit `.qmd` files with a rich WYSIWYG interface (headings, bold, italic, tables, math)
+- Edit `.qmd`, `.Rmd`, and `.md` files with a rich WYSIWYG interface (headings, bold, italic, tables, math)
 - Run R code chunks directly in the browser using WebAssembly (no local R required)
 - Packages like `tidyverse`, `kableExtra`, and `palmerpenguins` are pre-loaded automatically
 - Load and save files to any GitHub repository you have access to
@@ -131,7 +131,7 @@ npm run dist
 
 R runs entirely in your browser — no local R installation needed.
 
-When you open a `.qmd` file, the app automatically:
+When you open a `.qmd`, `.Rmd`, or `.md` file, the app automatically:
 
 1. Scans the document for `library()` and `require()` calls and installs those packages into the in-browser R environment
 2. Loads each installed package into the R session so it is immediately available
@@ -162,7 +162,7 @@ Once ready:
 → Wait for the blue "Installing R packages…" banner to disappear before running code. If the banner is gone and the error persists, reload the page.
 
 **R code gives "cannot open file '…': No such file or directory"**
-→ The data file could not be fetched from your repository. Check that the path in your R code is correct relative to the `.qmd` file and that the file exists in the repository. Files larger than 5 MB cannot be loaded. If the path is constructed dynamically (e.g. `paste0(dir, file)`) it cannot be detected automatically — rename it to a literal string instead.
+→ The data file could not be fetched from your repository. Check that the path in your R code is correct relative to the document and that the file exists in the repository. Files larger than 5 MB cannot be loaded. If the path is constructed dynamically (e.g. `paste0(dir, file)`) it cannot be detected automatically — rename it to a literal string instead.
 
 **R chunks show "Starting R…" and never finish**
 → Wait up to 60 seconds on first use. If it still hangs, open the browser DevTools (F12 → Console) and look for `[WebR]` log lines.
@@ -206,7 +206,7 @@ QuartoReview is a fork of [Resolve](https://github.com/MichelNivard/resolve) by 
 
 The following features were added in this fork by Daniel Lakens:
 
-- **QMD format support** — `.qmd` (Quarto Markdown) as the primary file format, including full round-trip conversion between QMD and the TipTap document model, and persistence of inline comments as HTML spans within QMD files
+- **QMD/Rmd/Md format support** — `.qmd` (Quarto Markdown), `.Rmd` (R Markdown), and `.md` (Markdown) as supported file formats, including full round-trip conversion between these formats and the TipTap document model; chunk options (e.g. `echo=FALSE`, named chunks) are preserved exactly without modification
 - **Vite migration** — migrated the frontend from Create React App to Vite
 - **Live preview pane** — side-by-side rendered prose preview
 - **WebR in-browser R execution** — run R code chunks directly in the browser via WebAssembly; packages referenced by `library()`/`require()` in the document are automatically installed and loaded when the file opens; R plots and tables are rendered inline; a per-chunk warning is shown when a required package is unavailable for WebAssembly

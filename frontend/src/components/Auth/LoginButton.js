@@ -86,7 +86,7 @@ const LoginButton = () => {
   return (
       <div className="login-card">
       <p>
-        Resolve is your seamless solution for collaborating on Quarto and Jupyter (`.ipynb`) documents. To get started, please sign in with your GitHub account.
+        Resolve is your seamless solution for collaborating on Quarto (`.qmd`), R Markdown (`.Rmd`), Markdown (`.md`), and Jupyter (`.ipynb`) documents. To get started, please sign in with your GitHub account.
       </p>
       {!authConfigured && (
         <div style={{

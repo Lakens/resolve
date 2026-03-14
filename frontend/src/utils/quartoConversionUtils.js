@@ -90,7 +90,7 @@ export function qmdToTiptapDoc(qmdContent, editor) {
           source: cell.source,
           outputs: [],
           executionCount: null,
-          metadata: { language: cell.language || 'r' }
+          metadata: { language: cell.language || 'r', chunkHeader: cell.chunkHeader || null }
         }
       });
     }
@@ -174,6 +174,7 @@ export function tiptapDocToQmd(editor) {
       cells.push({
         type: 'code',
         language: metadata?.language || 'r',
+        chunkHeader: metadata?.chunkHeader || null,
         source: Array.isArray(source) ? source : (source || '').split('\n').map(l => l + '\n'),
         outputs: []
       });

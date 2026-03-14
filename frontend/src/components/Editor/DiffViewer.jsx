@@ -14,7 +14,7 @@ const DiffViewer = ({ editor, selectedRepo, filePath }) => {
   const [historyError, setHistoryError] = useState('');
 
   const repoName = selectedRepo?.fullName;
-  const isQmd    = filePath?.endsWith('.qmd');
+  const isQmd    = filePath?.endsWith('.qmd') || filePath?.endsWith('.Rmd') || filePath?.endsWith('.rmd') || filePath?.endsWith('.md');
 
   // Load commit history whenever repo/file change
   useEffect(() => {
@@ -99,7 +99,7 @@ const DiffViewer = ({ editor, selectedRepo, filePath }) => {
     return (
       <div className="diff-viewer">
         <div className="diff-unsupported">
-          Diff view is only available for <code>.qmd</code> files.
+          Diff view is only available for <code>.qmd</code>, <code>.Rmd</code>, and <code>.md</code> files.
         </div>
       </div>
     );

@@ -40,9 +40,15 @@ async function listNotebooks(req, res) {
       recursive: 'true'
     });
 
-    // Filter for .ipynb and .qmd files
+    // Filter for supported file types
     const notebooks = treeData.tree
-      .filter(item => item.type === 'blob' && (item.path.endsWith('.ipynb') || item.path.endsWith('.qmd')))
+      .filter(item => item.type === 'blob' && (
+        item.path.endsWith('.ipynb') ||
+        item.path.endsWith('.qmd') ||
+        item.path.endsWith('.Rmd') ||
+        item.path.endsWith('.rmd') ||
+        item.path.endsWith('.md')
+      ))
       .map(item => item.path);
 
     res.json({ notebooks });

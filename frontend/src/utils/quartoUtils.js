@@ -68,6 +68,7 @@ export function parseQmd(qmdString) {
       }
 
       const language = codeChunkMatch[1];
+      const chunkHeader = codeChunkMatch[1] + (codeChunkMatch[2] || '');
       const codeLines = [];
       i++;
 
@@ -81,6 +82,7 @@ export function parseQmd(qmdString) {
       cells.push({
         type: 'code',
         language,
+        chunkHeader,
         source: codeLines.length > 0 ? codeLines.map(l => l + '\n') : [],
         outputs: []
       });
@@ -135,7 +137,8 @@ export function serializeQmd({ yaml: yamlObj, cells }) {
       while (sourceLines.length > 0 && sourceLines[sourceLines.length - 1] === '') {
         sourceLines.pop();
       }
-      parts.push(`\`\`\`{${language}}\n${sourceLines.join('\n')}\n\`\`\``);
+      const header = cell.chunkHeader !== undefined ? cell.chunkHeader : language;
+      parts.push(`\`\`\`{${header}}\n${sourceLines.join('\n')}\n\`\`\``);
     }
   }
 

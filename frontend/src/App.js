@@ -192,8 +192,8 @@ function App() {
 
     isLoadingFile.current = true;
     try {
-      if (filePath.endsWith('.qmd')) {
-        // --- QMD path: no user required ---
+      if (filePath.endsWith('.qmd') || filePath.endsWith('.Rmd') || filePath.endsWith('.rmd') || filePath.endsWith('.md')) {
+        // --- QMD/Rmd/Md path: no user required ---
         const result = await fetchFile(filePath, selectedRepo.fullName);
         setQmdContent(result.content);
         setIpynb(null);
@@ -273,7 +273,7 @@ function App() {
     }
 
     try {
-      if (filePath.endsWith('.qmd')) {
+      if (filePath.endsWith('.qmd') || filePath.endsWith('.Rmd') || filePath.endsWith('.rmd') || filePath.endsWith('.md')) {
         const qmdString = tiptapDocToQmd(editor);
         await saveQmdToGitHub(qmdString, filePath, selectedRepo, commitMessage);
       } else {
