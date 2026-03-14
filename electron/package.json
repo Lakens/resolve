@@ -1,6 +1,6 @@
 {
   "name": "quartoreview",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Electron wrapper for QuartoReview",
   "main": "main.cjs",
   "scripts": {
