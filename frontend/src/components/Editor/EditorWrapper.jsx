@@ -79,9 +79,9 @@ const EditorWrapper = ({
   extensions,
   references,
   localFilePath,
-  startupGuideActive,
   handleSwitchToGitHubMode,
   handleOpenLocalFile,
+  handleOpenStartupGuide,
   handleSaveLocalFile,
 }) => {
   const { isAuthenticated } = useAuth();
@@ -484,7 +484,7 @@ const EditorWrapper = ({
           <img src="/logo.png" alt="QuartoReview" className="app-logo" />
 
           {/* GitHub file selectors — only when not in local-file mode */}
-          {(!localFilePath || startupGuideActive) && (
+          {!localFilePath && (
             <>
               <select
                 value={selectedRepo?.fullName || ''}
@@ -523,8 +523,7 @@ const EditorWrapper = ({
               {localFilePath.split(/[\\/]/).pop()}
             </span>
           )}
-
-          {startupGuideActive && (
+          {localFilePath && (
             <button className="hdr-btn" onClick={handleSwitchToGitHubMode}>
               Switch to GitHub
             </button>
@@ -583,6 +582,14 @@ const EditorWrapper = ({
                     onClick={() => { setShowMenu(false); handleOpenLocalFile(); }}
                   >
                     Open local file…
+                  </button>
+                )}
+                {isElectron && (
+                  <button
+                    className="app-menu-item"
+                    onClick={() => { setShowMenu(false); handleOpenStartupGuide(); }}
+                  >
+                    Open guide
                   </button>
                 )}
                 {isElectron && (

@@ -43,7 +43,6 @@ function App() {
   const [ipynb, setIpynb] = useState(null);
   const [qmdContent, setQmdContent] = useState(null);
   const [localFilePath, setLocalFilePath] = useState(null); // OS path when a local file is open
-  const [startupGuideActive, setStartupGuideActive] = useState(false);
   const [referenceManager, setReferenceManager] = useState(null);
   const [references, setReferences] = useState([]); // Add references state
   const [saveMessage, setSaveMessage] = useState('');
@@ -52,31 +51,6 @@ function App() {
   const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
   const [commentMarkKey, setCommentMarkKey] = useState(0);
   const isLoadingFile = useRef(false);
-  const hasLoadedStartupGuide = useRef(false);
-
-  useEffect(() => {
-    const loadStartupGuide = async () => {
-      if (hasLoadedStartupGuide.current) return;
-      if (owner || repo) return;
-      if (!window.quartoReviewDesktop?.openStartupGuide) return;
-      if (localFilePath || qmdContent || ipynb) return;
-
-      const result = await window.quartoReviewDesktop.openStartupGuide();
-      if (!result) return;
-
-      hasLoadedStartupGuide.current = true;
-      setLocalFilePath(result.filePath || result.displayName || 'GUIDE.md');
-      setStartupGuideActive(true);
-      setQmdContent(result.content);
-      setIpynb(null);
-      setSelectedRepo(null);
-    };
-
-    loadStartupGuide().catch((error) => {
-      console.error('Error loading startup guide:', error);
-    });
-  }, [owner, repo, localFilePath, qmdContent, ipynb]);
-
   useEffect(() => {
     const loadRepositories = async () => {
       if (isAuthenticated) {
@@ -201,7 +175,15 @@ function App() {
     const result = await window.quartoReviewDesktop?.openLocalFile();
     if (!result) return;
     setLocalFilePath(result.filePath);
-    setStartupGuideActive(false);
+    setQmdContent(result.content);
+    setIpynb(null);
+    setSelectedRepo(null);
+  };
+
+  const handleOpenStartupGuide = async () => {
+    const result = await window.quartoReviewDesktop?.openStartupGuide();
+    if (!result) return;
+    setLocalFilePath(result.filePath || result.displayName || 'GUIDE.md');
     setQmdContent(result.content);
     setIpynb(null);
     setSelectedRepo(null);
@@ -209,7 +191,6 @@ function App() {
 
   const handleSwitchToGitHubMode = () => {
     setLocalFilePath(null);
-    setStartupGuideActive(false);
     setQmdContent(null);
     setIpynb(null);
   };
@@ -246,7 +227,6 @@ function App() {
     isLoadingFile.current = true;
     try {
       setLocalFilePath(null);
-      setStartupGuideActive(false);
 
       if (filePath.endsWith('.qmd') || filePath.endsWith('.Rmd') || filePath.endsWith('.rmd') || filePath.endsWith('.md')) {
         // --- QMD/Rmd/Md path: no user required ---
@@ -390,9 +370,9 @@ function App() {
         extensions={editorExtensions}
         references={references}
         localFilePath={localFilePath}
-        startupGuideActive={startupGuideActive}
         handleSwitchToGitHubMode={handleSwitchToGitHubMode}
         handleOpenLocalFile={handleOpenLocalFile}
+        handleOpenStartupGuide={handleOpenStartupGuide}
         handleSaveLocalFile={handleSaveLocalFile}
       />
     </div>

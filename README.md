@@ -54,11 +54,12 @@ If you prefer not to trust unsigned binaries, you can build the app from source 
 
 ### First launch
 
-On first launch, QuartoReview opens a bundled `GUIDE.md` document inside the editor so new users start with instructions instead of an empty document.
+On first launch, QuartoReview opens to an empty workspace.
 
-You can then:
+From the app menu you can:
 
-- use **Open local file...** from the menu to edit a file on your computer
+- use **Open local file...** to edit a file on your computer
+- use **Open guide** to read the bundled `GUIDE.md`
 - use **Set up GitHub access** to work directly with GitHub repositories
 
 ---
