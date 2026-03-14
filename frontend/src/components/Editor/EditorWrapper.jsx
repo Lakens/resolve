@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaSun, FaMoon, FaEdit, FaShare } from 'react-icons/fa';
+import { FaSun, FaMoon, FaEdit, FaShare, FaBars } from 'react-icons/fa';
 import ShareModal from '../Share/ShareModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { subscribePackageStatus, subscribeFileStatus, installPackagesForQmd, syncFilesForQmd, evaluateInlineExpressions, getInlineRCache } from '../../utils/webRSingleton';
@@ -51,6 +51,8 @@ const ReferencesList = ({ references }) => {
   );
 };
 
+const isElectron = typeof window !== 'undefined' && !!window.quartoReviewDesktop;
+
 const EditorWrapper = ({
   referenceManager,
   filePath,
@@ -66,6 +68,9 @@ const EditorWrapper = ({
   setSelectedRepo,
   extensions,
   references,
+  localFilePath,
+  handleOpenLocalFile,
+  handleSaveLocalFile,
 }) => {
   const { isAuthenticated } = useAuth();
   const [showComments, setShowComments] = useState(false);
@@ -85,6 +90,16 @@ const EditorWrapper = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showSource, setShowSource] = useState(false);
   const [rawSource, setRawSource] = useState('');
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMenu]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
@@ -271,6 +286,15 @@ const EditorWrapper = ({
 
   const onSaveFileClick = () => {
     if (!editor) return;
+    if (localFilePath) {
+      // Save directly to disk — no commit message needed
+      if (showSource) qmdToTiptapDoc(rawSource, editor);
+      handleSaveLocalFile(editor).then(() => {
+        wordCountAtLastSave.current = wordCount;
+        isDirty.current = false;
+      });
+      return;
+    }
     setCommitMsg('');
     setShowCommitDialog(true);
   };
@@ -410,34 +434,48 @@ const EditorWrapper = ({
       <header className="app-header">
         <div className="header-top">
           <img src="/logo.png" alt="QuartoReview" className="app-logo" />
-          <select
-            value={selectedRepo?.fullName || ''}
-            onChange={(e) => {
-              const repo = repositories.find(r => r.fullName === e.target.value);
-              setSelectedRepo(repo);
-            }}
-            className="repo-select"
-          >
-            <option value="">Select Repository</option>
-            {repositories.map((repo) => (
-              <option key={repo.id} value={repo.fullName}>
-                {repo.fullName}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filePath}
-            onChange={(e) => setFilePath(e.target.value)}
-            className="file-select"
-          >
-            <option value="">Select a file</option>
-            {notebooks.map((notebook) => (
-              <option key={notebook} value={notebook}>
-                {notebook}
-              </option>
-            ))}
-          </select>
-          <button className="hdr-btn" onClick={onLoadFile}>Load</button>
+
+          {/* GitHub file selectors — only when not in local-file mode */}
+          {!localFilePath && (
+            <>
+              <select
+                value={selectedRepo?.fullName || ''}
+                onChange={(e) => {
+                  const repo = repositories.find(r => r.fullName === e.target.value);
+                  setSelectedRepo(repo);
+                }}
+                className="repo-select"
+              >
+                <option value="">Select Repository</option>
+                {repositories.map((repo) => (
+                  <option key={repo.id} value={repo.fullName}>
+                    {repo.fullName}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={filePath}
+                onChange={(e) => setFilePath(e.target.value)}
+                className="file-select"
+              >
+                <option value="">Select a file</option>
+                {notebooks.map((notebook) => (
+                  <option key={notebook} value={notebook}>
+                    {notebook}
+                  </option>
+                ))}
+              </select>
+              <button className="hdr-btn" onClick={onLoadFile}>Load</button>
+            </>
+          )}
+
+          {/* Local file indicator */}
+          {localFilePath && (
+            <span className="hdr-local-filename" title={localFilePath}>
+              {localFilePath.split(/[\\/]/).pop()}
+            </span>
+          )}
+
           <button className="hdr-btn" onClick={onSaveFileClick}>Save</button>
           {wordCount - wordCountAtLastSave.current >= 50 && (
             <span className="hdr-save-nudge">
@@ -464,13 +502,55 @@ const EditorWrapper = ({
               <span className="hdr-dark-thumb" />
             </span>
           </button>
-          <button
-            className="hdr-btn hdr-share-btn"
-            onClick={() => setIsShareModalOpen(true)}
-            title="Share document"
-          >
-            <FaShare /> Share
-          </button>
+          {!localFilePath && (
+            <button
+              className="hdr-btn hdr-share-btn"
+              onClick={() => setIsShareModalOpen(true)}
+              title="Share document"
+            >
+              <FaShare /> Share
+            </button>
+          )}
+
+          {/* App menu — top right */}
+          <div className="app-menu" ref={menuRef}>
+            <button
+              className="hdr-btn app-menu-btn"
+              onClick={() => setShowMenu(v => !v)}
+              title="Menu"
+            >
+              <FaBars />
+            </button>
+            {showMenu && (
+              <div className="app-menu-dropdown">
+                {isElectron && (
+                  <button
+                    className="app-menu-item"
+                    onClick={() => { setShowMenu(false); handleOpenLocalFile(); }}
+                  >
+                    Open local file…
+                  </button>
+                )}
+                {isElectron && (
+                  <button
+                    className="app-menu-item"
+                    onClick={() => { setShowMenu(false); window.quartoReviewDesktop.showGitHubSetup(); }}
+                  >
+                    Set up GitHub access
+                  </button>
+                )}
+                <a
+                  className="app-menu-item"
+                  href="https://github.com/Lakens/QuartoReview/issues"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setShowMenu(false)}
+                >
+                  Feedback
+                </a>
+              </div>
+            )}
+          </div>
         </div>
         {editor && (
           <EditorToolbar
@@ -489,9 +569,17 @@ const EditorWrapper = ({
       </header>
 
       <main className="app-main">
-        {!isAuthenticated ? (
-          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '4rem' }}>
+        {!isAuthenticated && !localFilePath ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '4rem', gap: '1.5rem' }}>
             <LoginButton />
+            {isElectron && (
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ color: '#666', marginBottom: '0.75rem', fontSize: '0.9rem' }}>— or —</p>
+                <button className="hdr-btn" onClick={handleOpenLocalFile} style={{ fontSize: '0.95rem', padding: '0.5rem 1.25rem' }}>
+                  Open local file…
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="content-container">

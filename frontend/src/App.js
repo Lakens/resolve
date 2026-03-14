@@ -42,6 +42,7 @@ function App() {
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [ipynb, setIpynb] = useState(null);
   const [qmdContent, setQmdContent] = useState(null);
+  const [localFilePath, setLocalFilePath] = useState(null); // OS path when a local file is open
   const [referenceManager, setReferenceManager] = useState(null);
   const [references, setReferences] = useState([]); // Add references state
   const [saveMessage, setSaveMessage] = useState('');
@@ -169,6 +170,25 @@ function App() {
       return notebook.metadata.active_editors.name;
     }
     return null;
+  };
+
+  const handleOpenLocalFile = async () => {
+    const result = await window.quartoReviewDesktop?.openLocalFile();
+    if (!result) return;
+    setLocalFilePath(result.filePath);
+    setQmdContent(result.content);
+    setIpynb(null);
+    setSelectedRepo(null);
+  };
+
+  const handleSaveLocalFile = async (editor) => {
+    const content = tiptapDocToQmd(editor);
+    const result = await window.quartoReviewDesktop?.saveLocalFile(content, localFilePath);
+    if (result?.filePath) {
+      setLocalFilePath(result.filePath);
+      setSaveMessage('File saved');
+      setTimeout(() => setSaveMessage(''), 3000);
+    }
   };
 
   const handleLoadFile = async () => {
@@ -333,6 +353,9 @@ function App() {
         setSelectedRepo={setSelectedRepo}
         extensions={editorExtensions}
         references={references}
+        localFilePath={localFilePath}
+        handleOpenLocalFile={handleOpenLocalFile}
+        handleSaveLocalFile={handleSaveLocalFile}
       />
     </div>
   );

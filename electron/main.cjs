@@ -254,16 +254,8 @@ function createMainWindow() {
 }
 
 async function launchApp() {
-  // Show setup wizard on every launch until a valid token is saved
-  if (needsSetup()) {
-    await showSetupWindow();
-    // If they closed the window without saving, quit
-    if (needsSetup()) {
-      app.quit();
-      return;
-    }
-  }
-
+  // GitHub setup is now optional — available from the in-app menu.
+  // The app launches regardless of whether a token has been configured.
   spawnBackend();
   await waitForPort(BACKEND_PORT);
 
@@ -273,6 +265,47 @@ async function launchApp() {
   const window = createMainWindow();
   await window.loadURL(startUrl);
 }
+
+// ---------------------------------------------------------------------------
+// IPC — local file access & in-app GitHub setup
+// ---------------------------------------------------------------------------
+
+ipcMain.handle('open-local-file', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Open file',
+    filters: [
+      { name: 'Markdown files', extensions: ['qmd', 'Rmd', 'rmd', 'md'] },
+      { name: 'All files', extensions: ['*'] },
+    ],
+    properties: ['openFile'],
+  });
+  if (canceled || filePaths.length === 0) return null;
+  const filePath = filePaths[0];
+  const content = fs.readFileSync(filePath, 'utf8');
+  return { filePath, content };
+});
+
+ipcMain.handle('save-local-file', async (_event, content, filePath) => {
+  if (filePath) {
+    fs.writeFileSync(filePath, content, 'utf8');
+    return { filePath };
+  }
+  // No path: ask where to save
+  const { canceled, filePath: chosenPath } = await dialog.showSaveDialog({
+    title: 'Save file',
+    filters: [
+      { name: 'Markdown files', extensions: ['qmd', 'Rmd', 'rmd', 'md'] },
+      { name: 'All files', extensions: ['*'] },
+    ],
+  });
+  if (canceled || !chosenPath) return null;
+  fs.writeFileSync(chosenPath, content, 'utf8');
+  return { filePath: chosenPath };
+});
+
+ipcMain.handle('show-github-setup', async () => {
+  await showSetupWindow();
+});
 
 // ---------------------------------------------------------------------------
 // App lifecycle
