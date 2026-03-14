@@ -86,7 +86,7 @@ const LoginButton = () => {
   return (
       <div className="login-card">
       <p>
-        Resolve is your seamless solution for collaborating on Quarto (`.qmd`), R Markdown (`.Rmd`), Markdown (`.md`), and Jupyter (`.ipynb`) documents. To get started, please sign in with your GitHub account.
+        QuartoReview is a WYSIWYG editor for Quarto (`.qmd`), R Markdown (`.Rmd`), Markdown (`.md`), and Jupyter (`.ipynb`) documents. To collaborate via GitHub, please sign in below.
       </p>
       {!authConfigured && (
         <div style={{
@@ -101,7 +101,7 @@ const LoginButton = () => {
           GitHub is not configured yet. Click the button below and QuartoReview will guide you through connecting the app to GitHub from inside the UI.
         </div>
       )}
-      <p>Don't have any .ipynb files to test Resolve? Go to GitHub and fork: https://github.com/MichelNivard/writing-together</p>
+      <p>Don't have a file to try? Download a sample from <a href="https://github.com/Lakens/QuartoReview" target="_blank" rel="noreferrer">github.com/Lakens/QuartoReview</a> or open a local file from the menu.</p>
       <p>
         Don't have a GitHub account yet?{' '}
         <a href="https://github.com/join">
@@ -130,7 +130,7 @@ const LoginButton = () => {
             <p>Last updated: January 22, 2025</p>
 
             <h2>Introduction</h2>
-            <p>This Privacy Policy explains how Resolve ("we", "our", or "us") collects, uses, and protects your information when you use our WYSIWYG Jupyter Notebook Editor ("the Service"). We are committed to protecting your privacy and handling your data in an open and transparent manner.</p>
+            <p>This Privacy Policy explains how QuartoReview ("we", "our", or "us") collects, uses, and protects your information when you use our WYSIWYG document editor ("the Service"). We are committed to protecting your privacy and handling your data in an open and transparent manner.</p>
 
             <h2>Information We Collect</h2>
             <h3>1. Account Information</h3>
@@ -191,7 +191,7 @@ const LoginButton = () => {
             </ul>
 
             <h2>Contact Us</h2>
-            <p>If you have questions about this Privacy Policy, please create an issue in our GitHub repository: <a href="https://github.com/MichelNivard/resolve" target="_blank" rel="noopener noreferrer">https://github.com/MichelNivard/resolve</a></p>
+            <p>If you have questions about this Privacy Policy, please create an issue in our GitHub repository: <a href="https://github.com/Lakens/QuartoReview" target="_blank" rel="noopener noreferrer">https://github.com/Lakens/QuartoReview</a></p>
 
             <h2>Cookies</h2>
             <p>We use essential cookies only for maintaining your session (i.e. to keep you logged in while you edit, enabling you to save) and GitHub authentication. We do not use any other cookies. No tracking or marketing cookies are used.</p>

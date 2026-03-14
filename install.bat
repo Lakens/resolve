@@ -1,8 +1,8 @@
 @echo off
-title Resolve - Installing dependencies...
+title QuartoReview - Installing dependencies...
 
 echo ================================================
-echo  Resolve - First-time setup
+echo  QuartoReview - First-time setup
 echo ================================================
 echo.
 

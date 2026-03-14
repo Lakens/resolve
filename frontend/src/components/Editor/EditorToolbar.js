@@ -140,7 +140,7 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
 
     try {
 
-      const username = 'Michel Nivard'; // Extract the username from the response
+      const username = user?.name || user?.login || 'Anonymous';
 
       if (!editor) return;
 
