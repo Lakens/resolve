@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
@@ -13,6 +13,11 @@ let quitting = false;
 const DEFAULT_BACKEND_PORT = 3001;
 const ELECTRON_RENDERER_URL = process.env.ELECTRON_RENDERER_URL;
 const IS_SMOKE_TEST = process.env.QUARTOREVIEW_SMOKE_TEST === '1';
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+
+if (!gotSingleInstanceLock) {
+  app.quit();
+}
 
 function getBackendScriptPath() {
   if (app.isPackaged) {
@@ -41,6 +46,138 @@ function getBundledGuidePath() {
     return path.join(process.resourcesPath, 'guide', 'GUIDE.md');
   }
   return path.join(__dirname, '..', 'GUIDE.md');
+}
+
+function getAutosaveRootPath() {
+  return path.join(app.getPath('userData'), 'autosaves');
+}
+
+function ensureAutosaveRootPath() {
+  const autosaveRoot = getAutosaveRootPath();
+  fs.mkdirSync(autosaveRoot, { recursive: true });
+  return autosaveRoot;
+}
+
+function sanitizeFileSegment(value) {
+  return String(value || 'document')
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80) || 'document';
+}
+
+function formatAutosaveTimestamp(date = new Date()) {
+  const pad = (num) => String(num).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+}
+
+function getDocumentIdentity(document) {
+  if (!document || !document.kind) return null;
+  if (document.kind === 'local') return `local::${document.filePath || document.displayName || 'untitled'}`;
+  if (document.kind === 'github') return `github::${document.repository || 'unknown'}::${document.filePath || document.displayName || 'untitled'}`;
+  if (document.kind === 'guide') return 'guide::GUIDE.md';
+  return `${document.kind}::${document.filePath || document.displayName || 'untitled'}`;
+}
+
+function getDocumentBaseName(document) {
+  const source = document?.filePath || document?.displayName || 'document.qmd';
+  const parsed = path.parse(source);
+  const ext = parsed.ext || '.qmd';
+  const name = sanitizeFileSegment(parsed.name || 'document');
+  return { baseName: name, extension: ext };
+}
+
+function getDocumentAutosavePaths(document) {
+  const identity = getDocumentIdentity(document);
+  if (!identity) return null;
+
+  const docHash = crypto.createHash('sha1').update(identity).digest('hex').slice(0, 12);
+  const { baseName, extension } = getDocumentBaseName(document);
+  const docDir = path.join(ensureAutosaveRootPath(), `${baseName}__${docHash}`);
+
+  return {
+    identity,
+    docDir,
+    metaPath: path.join(docDir, 'meta.json'),
+    latestPath: path.join(docDir, `${baseName}__latest${extension}`),
+    baseName,
+    extension,
+  };
+}
+
+function hashContent(content) {
+  return crypto.createHash('sha1').update(String(content || ''), 'utf8').digest('hex');
+}
+
+function readAutosaveMeta(metaPath) {
+  if (!fs.existsSync(metaPath)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+  } catch (_) {
+    return {};
+  }
+}
+
+function writeAutosaveMeta(metaPath, meta) {
+  fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf8');
+}
+
+function pruneAutosaveEntries(meta, maxCheckpoints = 10, maxAgeDays = 14) {
+  const cutoff = Date.now() - (maxAgeDays * 24 * 60 * 60 * 1000);
+  const filesToDelete = [];
+
+  const checkpoints = Array.isArray(meta.checkpoints)
+    ? meta.checkpoints
+        .filter((entry) => entry && entry.filePath)
+        .filter((entry) => {
+          const keep = !entry.savedAt || Date.parse(entry.savedAt) >= cutoff;
+          if (!keep) filesToDelete.push(entry.filePath);
+          return keep;
+        })
+        .sort((a, b) => Date.parse(b.savedAt || 0) - Date.parse(a.savedAt || 0))
+    : [];
+
+  while (checkpoints.length > maxCheckpoints) {
+    const removed = checkpoints.pop();
+    filesToDelete.push(removed.filePath);
+  }
+
+  const sessionStart = meta.sessionStart && meta.sessionStart.filePath && fs.existsSync(meta.sessionStart.filePath)
+    ? meta.sessionStart
+    : null;
+
+  return {
+    nextMeta: {
+      ...meta,
+      checkpoints,
+      sessionStart,
+    },
+    filesToDelete,
+  };
+}
+
+function cleanupAutosaveStorage() {
+  const autosaveRoot = ensureAutosaveRootPath();
+  const entries = fs.readdirSync(autosaveRoot, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const docDir = path.join(autosaveRoot, entry.name);
+    const metaPath = path.join(docDir, 'meta.json');
+    if (!fs.existsSync(metaPath)) continue;
+
+    const meta = readAutosaveMeta(metaPath);
+    const { nextMeta, filesToDelete } = pruneAutosaveEntries(meta);
+    for (const filePath of filesToDelete) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (_) {
+        // Ignore stale paths.
+      }
+    }
+    writeAutosaveMeta(metaPath, nextMeta);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -464,12 +601,134 @@ ipcMain.handle('open-startup-guide', async () => {
   };
 });
 
+ipcMain.handle('autosave-save', async (_event, payload) => {
+  const { document, content, kind } = payload || {};
+  const paths = getDocumentAutosavePaths(document);
+  if (!paths || typeof content !== 'string') return null;
+
+  fs.mkdirSync(paths.docDir, { recursive: true });
+  const savedAt = new Date().toISOString();
+  const contentHash = hashContent(content);
+  const meta = readAutosaveMeta(paths.metaPath);
+
+  fs.writeFileSync(paths.latestPath, content, 'utf8');
+  meta.identity = paths.identity;
+  meta.document = document;
+  meta.latest = {
+    filePath: paths.latestPath,
+    savedAt,
+    contentHash,
+  };
+
+  if (kind === 'session-start') {
+    const sessionPath = path.join(
+      paths.docDir,
+      `${paths.baseName}__session-start__${formatAutosaveTimestamp(new Date(savedAt))}${paths.extension}`
+    );
+    fs.writeFileSync(sessionPath, content, 'utf8');
+    meta.sessionStart = {
+      filePath: sessionPath,
+      savedAt,
+      contentHash,
+    };
+  }
+
+  if (kind === 'checkpoint') {
+    const checkpointPath = path.join(
+      paths.docDir,
+      `${paths.baseName}__${formatAutosaveTimestamp(new Date(savedAt))}${paths.extension}`
+    );
+    fs.writeFileSync(checkpointPath, content, 'utf8');
+    meta.checkpoints = Array.isArray(meta.checkpoints) ? meta.checkpoints : [];
+    meta.checkpoints.push({
+      filePath: checkpointPath,
+      savedAt,
+      contentHash,
+    });
+  }
+
+  const { nextMeta, filesToDelete } = pruneAutosaveEntries(meta);
+  writeAutosaveMeta(paths.metaPath, nextMeta);
+  for (const filePath of filesToDelete) {
+    try {
+      fs.unlinkSync(filePath);
+    } catch (_) {
+      // Ignore files already gone.
+    }
+  }
+
+  return {
+    savedAt,
+    latestPath: paths.latestPath,
+  };
+});
+
+ipcMain.handle('autosave-get-recovery', async (_event, payload) => {
+  const { document, currentContent } = payload || {};
+  const paths = getDocumentAutosavePaths(document);
+  if (!paths || !fs.existsSync(paths.metaPath)) return null;
+
+  const meta = readAutosaveMeta(paths.metaPath);
+  const currentHash = hashContent(currentContent || '');
+  const candidates = [];
+
+  if (meta.latest?.filePath && fs.existsSync(meta.latest.filePath) && meta.latest.contentHash !== currentHash) {
+    candidates.push({
+      type: 'latest',
+      filePath: meta.latest.filePath,
+      savedAt: meta.latest.savedAt,
+    });
+  }
+
+  if (meta.sessionStart?.filePath && fs.existsSync(meta.sessionStart.filePath) && meta.sessionStart.contentHash !== currentHash) {
+    candidates.push({
+      type: 'session-start',
+      filePath: meta.sessionStart.filePath,
+      savedAt: meta.sessionStart.savedAt,
+    });
+  }
+
+  for (const checkpoint of meta.checkpoints || []) {
+    if (!checkpoint?.filePath || !fs.existsSync(checkpoint.filePath)) continue;
+    if (checkpoint.contentHash === currentHash) continue;
+    candidates.push({
+      type: 'checkpoint',
+      filePath: checkpoint.filePath,
+      savedAt: checkpoint.savedAt,
+    });
+  }
+
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => Date.parse(b.savedAt || 0) - Date.parse(a.savedAt || 0));
+  const newest = candidates[0];
+
+  return {
+    ...newest,
+    content: fs.readFileSync(newest.filePath, 'utf8'),
+  };
+});
+
+ipcMain.handle('autosave-clear', async (_event, payload) => {
+  const paths = getDocumentAutosavePaths(payload?.document);
+  if (!paths || !fs.existsSync(paths.docDir)) return null;
+
+  fs.rmSync(paths.docDir, { recursive: true, force: true });
+  return { cleared: true };
+});
+
+ipcMain.handle('autosave-open-folder', async () => {
+  const autosaveRoot = ensureAutosaveRootPath();
+  return shell.openPath(autosaveRoot);
+});
+
 // ---------------------------------------------------------------------------
 // App lifecycle
 // ---------------------------------------------------------------------------
 
 app.whenReady().then(async () => {
   try {
+    Menu.setApplicationMenu(null);
+    cleanupAutosaveStorage();
     await launchApp();
   } catch (error) {
     process.exitCode = 1;
@@ -484,6 +743,14 @@ app.whenReady().then(async () => {
   app.on('activate', async () => {
     if (BrowserWindow.getAllWindows().length === 0) await launchApp();
   });
+});
+
+app.on('second-instance', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+  mainWindow.focus();
 });
 
 app.on('before-quit', () => {

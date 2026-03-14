@@ -341,20 +341,21 @@ body {
   flex: 1;
   overflow-y: auto;
   min-width: 0;
+  padding: 24px 20px 18px;
 }
 
 .editor-content-container {
   width: 100%;
-  max-width: 1080px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 2rem 2rem;
+  padding: 1.5rem 1rem 2rem;
 }
 
 .editor-statusbar {
   width: 100%;
-  max-width: 1080px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 0.375rem 2rem 0.75rem;
+  padding: 0.375rem 1rem 0.75rem;
   font-size: 0.72rem;
   color: var(--color-text-muted, #999);
   text-align: right;
@@ -381,6 +382,22 @@ body {
 
 .editor-container--source {
   flex-basis: 100%;
+}
+
+.editor-with-sidebar--preview .editor-content-container,
+.editor-with-sidebar--diff .editor-content-container {
+  max-width: 100%;
+}
+
+.editor-with-sidebar--preview .editor-main,
+.editor-with-sidebar--diff .editor-main {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.editor-with-sidebar--preview .editor-statusbar,
+.editor-with-sidebar--diff .editor-statusbar {
+  max-width: 100%;
 }
 
 .editor-main--source {

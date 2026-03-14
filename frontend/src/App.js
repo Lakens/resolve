@@ -43,6 +43,7 @@ function App() {
   const [ipynb, setIpynb] = useState(null);
   const [qmdContent, setQmdContent] = useState(null);
   const [localFilePath, setLocalFilePath] = useState(null); // OS path when a local file is open
+  const [activeDocument, setActiveDocument] = useState(null);
   const [referenceManager, setReferenceManager] = useState(null);
   const [references, setReferences] = useState([]); // Add references state
   const [saveMessage, setSaveMessage] = useState('');
@@ -174,34 +175,57 @@ function App() {
   const handleOpenLocalFile = async () => {
     const result = await window.quartoReviewDesktop?.openLocalFile();
     if (!result) return;
+    const document = {
+      kind: 'local',
+      filePath: result.filePath,
+      displayName: result.filePath.split(/[\\/]/).pop(),
+    };
+    const recoveredContent = await maybeRestoreAutosave(document, result.content);
     setFilePath('');
     setLocalFilePath(result.filePath);
-    setQmdContent(result.content);
+    setQmdContent(recoveredContent);
     setIpynb(null);
     setSelectedRepo(null);
+    setActiveDocument(document);
   };
 
   const handleOpenStartupGuide = async () => {
     const result = await window.quartoReviewDesktop?.openStartupGuide();
     if (!result) return;
+    const document = {
+      kind: 'guide',
+      filePath: result.filePath || 'quarto-review://guide/GUIDE.md',
+      displayName: result.displayName || 'GUIDE.md',
+    };
+    const recoveredContent = await maybeRestoreAutosave(document, result.content);
     setFilePath('');
     setLocalFilePath(result.filePath || result.displayName || 'GUIDE.md');
-    setQmdContent(result.content);
+    setQmdContent(recoveredContent);
     setIpynb(null);
     setSelectedRepo(null);
+    setActiveDocument(document);
   };
 
   const handleSwitchToGitHubMode = () => {
     setLocalFilePath(null);
     setQmdContent(null);
     setIpynb(null);
+    setActiveDocument(null);
   };
 
   const handleSaveLocalFile = async (editor) => {
     const content = tiptapDocToQmd(editor);
     const result = await window.quartoReviewDesktop?.saveLocalFile(content, localFilePath);
     if (result?.filePath) {
+      if (activeDocument) {
+        await window.quartoReviewDesktop?.clearAutosaves({ document: activeDocument });
+      }
       setLocalFilePath(result.filePath);
+      setActiveDocument({
+        kind: 'local',
+        filePath: result.filePath,
+        displayName: result.filePath.split(/[\\/]/).pop(),
+      });
       setSaveMessage('File saved');
       setTimeout(() => setSaveMessage(''), 3000);
     }
@@ -233,8 +257,16 @@ function App() {
       if (filePath.endsWith('.qmd') || filePath.endsWith('.Rmd') || filePath.endsWith('.rmd') || filePath.endsWith('.md')) {
         // --- QMD/Rmd/Md path: no user required ---
         const result = await fetchFile(filePath, selectedRepo.fullName);
-        setQmdContent(result.content);
+        const document = {
+          kind: 'github',
+          repository: selectedRepo.fullName,
+          filePath,
+          displayName: filePath.split('/').pop(),
+        };
+        const recoveredContent = await maybeRestoreAutosave(document, result.content);
+        setQmdContent(recoveredContent);
         setIpynb(null);
+        setActiveDocument(document);
       } else {
         // --- ipynb path ---
         const notebook = await fetchNotebook(filePath, selectedRepo.fullName);
@@ -268,6 +300,7 @@ function App() {
 
         setIpynb(notebook);
         setQmdContent(null);
+        setActiveDocument(null);
       }
 
       const manager = new GitHubReferenceManager(
@@ -314,6 +347,9 @@ function App() {
       if (filePath.endsWith('.qmd') || filePath.endsWith('.Rmd') || filePath.endsWith('.rmd') || filePath.endsWith('.md')) {
         const qmdString = tiptapDocToQmd(editor);
         await saveQmdToGitHub(qmdString, filePath, selectedRepo, commitMessage);
+        if (activeDocument) {
+          await window.quartoReviewDesktop?.clearAutosaves({ document: activeDocument });
+        }
       } else {
         if (!ipynb) {
           console.warn('No ipynb file available.');
@@ -352,6 +388,28 @@ function App() {
     }
   };
 
+  const maybeRestoreAutosave = async (document, content) => {
+    if (!window.quartoReviewDesktop?.getRecoveryCandidate) return content;
+
+    const recovery = await window.quartoReviewDesktop.getRecoveryCandidate({
+      document,
+      currentContent: content,
+    });
+
+    if (!recovery?.content) return content;
+
+    const label = document.displayName || document.filePath || 'this document';
+    const shouldRestore = window.confirm(
+      `A newer autosave was found for ${label} from ${new Date(recovery.savedAt).toLocaleString()}. Restore it now?`
+    );
+
+    if (!shouldRestore) return content;
+
+    setSaveMessage(`Restored autosave from ${new Date(recovery.savedAt).toLocaleString()}`);
+    setTimeout(() => setSaveMessage(''), 4000);
+    return recovery.content;
+  };
+
   return (
     <div className="App">
       <Analytics />
@@ -372,6 +430,7 @@ function App() {
         extensions={editorExtensions}
         references={references}
         localFilePath={localFilePath}
+        activeDocument={activeDocument}
         handleSwitchToGitHubMode={handleSwitchToGitHubMode}
         handleOpenLocalFile={handleOpenLocalFile}
         handleOpenStartupGuide={handleOpenStartupGuide}

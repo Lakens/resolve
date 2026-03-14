@@ -6,7 +6,7 @@
   color: #2d2d2d; /* Neutral dark gray */
   font-weight: 200;
   background: #ffffff; /* Clean white background */
-  padding: 1rem 2rem; /* Consistent padding inside editor */
+  padding: 1rem 1.35rem; /* Consistent padding inside editor */
   border-radius: 8px; /* Rounded corners for a modern look */
   /*  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Subtle shadow for floating effect */ 
   height: auto;
@@ -479,7 +479,7 @@
 
 .editor-main {
   height: 100%;
-  padding: 50px;
+  padding: 26px 20px 18px;
   margin: 12px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -493,7 +493,7 @@
 
 .editor-content-container {
   width: 100%;
-  max-width: 1080px;
+  max-width: 1240px;
   margin: 0 auto;
   background: rgb(255, 255, 255);
 }
@@ -693,7 +693,7 @@
 .preview-pane {
   flex: 1;
   overflow-y: auto;
-  padding: 50px;
+  padding: 26px 20px 18px;
   margin: 12px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -707,6 +707,11 @@
 }
 
 .editor-container--source .editor-content-container {
+  max-width: 100%;
+}
+
+.editor-with-sidebar--preview .editor-content-container,
+.editor-with-sidebar--diff .editor-content-container {
   max-width: 100%;
 }
 

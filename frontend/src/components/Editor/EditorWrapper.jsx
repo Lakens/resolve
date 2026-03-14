@@ -79,6 +79,7 @@ const EditorWrapper = ({
   extensions,
   references,
   localFilePath,
+  activeDocument,
   handleSwitchToGitHubMode,
   handleOpenLocalFile,
   handleOpenStartupGuide,
@@ -104,6 +105,17 @@ const EditorWrapper = ({
   const [rawSource, setRawSource] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
+  const lastEditAtRef = useRef(Date.now());
+  const lastAutosaveAtRef = useRef(0);
+  const lastCheckpointAtRef = useRef(0);
+  const baselineContentRef = useRef('');
+  const sessionStartSavedRef = useRef(false);
+  const latestAutosaveHashRef = useRef('');
+
+  const autosaveSupported = Boolean(isElectron && window.quartoReviewDesktop?.saveAutosave && activeDocument && qmdContent);
+  const AUTOSAVE_IDLE_MS = 15000;
+  const AUTOSAVE_INTERVAL_MS = 60000;
+  const CHECKPOINT_INTERVAL_MS = 15 * 60 * 1000;
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -244,12 +256,15 @@ const EditorWrapper = ({
       setWordCount(text.trim().split(/\s+/).filter(w => w.length > 0).length);
     };
     const markDirty = () => { isDirty.current = true; };
+    const markEditedAt = () => { lastEditAtRef.current = Date.now(); };
     countWords();
     editor.on('update', countWords);
     editor.on('update', markDirty);
+    editor.on('update', markEditedAt);
     return () => {
       editor.off('update', countWords);
       editor.off('update', markDirty);
+      editor.off('update', markEditedAt);
     };
   }, [editor]);
 
@@ -304,6 +319,9 @@ const EditorWrapper = ({
       handleSaveLocalFile(editor).then(() => {
         wordCountAtLastSave.current = wordCount;
         isDirty.current = false;
+        baselineContentRef.current = tiptapDocToQmd(editor);
+        sessionStartSavedRef.current = false;
+        latestAutosaveHashRef.current = '';
       });
       return;
     }
@@ -321,6 +339,9 @@ const EditorWrapper = ({
       await handleSaveFile(editor, commitMsg.trim() || 'Update document');
       wordCountAtLastSave.current = wordCount;
       isDirty.current = false;
+      baselineContentRef.current = tiptapDocToQmd(editor);
+      sessionStartSavedRef.current = false;
+      latestAutosaveHashRef.current = '';
     } catch (error) {
       setError(error.message);
     }
@@ -403,10 +424,72 @@ const EditorWrapper = ({
           if (node.isText) text += ' ' + node.text;
         });
         wordCountAtLastSave.current = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+        baselineContentRef.current = tiptapDocToQmd(editor);
+        sessionStartSavedRef.current = false;
+        latestAutosaveHashRef.current = '';
+        lastAutosaveAtRef.current = 0;
+        lastCheckpointAtRef.current = 0;
+        isDirty.current = false;
       });
     });
     return () => cancelAnimationFrame(outer);
   }, [editor, ipynb, qmdContent]);
+
+  useEffect(() => {
+    if (!autosaveSupported || !editor) return;
+
+    const saveAutosave = async (kind, content) => {
+      const contentHash = `${content.length}:${content}`;
+      if (kind === 'latest' && latestAutosaveHashRef.current === contentHash) return;
+
+      await window.quartoReviewDesktop.saveAutosave({
+        document: activeDocument,
+        content,
+        kind,
+      });
+
+      if (kind === 'latest') {
+        latestAutosaveHashRef.current = contentHash;
+        lastAutosaveAtRef.current = Date.now();
+      }
+      if (kind === 'checkpoint') {
+        lastCheckpointAtRef.current = Date.now();
+      }
+      if (kind === 'session-start') {
+        sessionStartSavedRef.current = true;
+      }
+    };
+
+    const timerId = window.setInterval(() => {
+      const tick = async () => {
+        if (!isDirty.current) return;
+
+        const now = Date.now();
+        if (now - lastEditAtRef.current < AUTOSAVE_IDLE_MS) return;
+
+        const currentContent = showSource ? rawSource : tiptapDocToQmd(editor);
+        if (!currentContent || currentContent === baselineContentRef.current) return;
+
+        if (!sessionStartSavedRef.current && baselineContentRef.current) {
+          await saveAutosave('session-start', baselineContentRef.current);
+        }
+
+        if (now - lastAutosaveAtRef.current >= AUTOSAVE_INTERVAL_MS) {
+          await saveAutosave('latest', currentContent);
+        }
+
+        if (now - lastCheckpointAtRef.current >= CHECKPOINT_INTERVAL_MS) {
+          await saveAutosave('checkpoint', currentContent);
+        }
+      };
+
+      tick().catch((error) => {
+        console.error('Autosave failed:', error);
+      });
+    }, 5000);
+
+    return () => window.clearInterval(timerId);
+  }, [autosaveSupported, editor, activeDocument, rawSource, showSource]);
 
   // Handle editor cleanup
   useEffect(() => {
@@ -592,6 +675,14 @@ const EditorWrapper = ({
                     onClick={() => { setShowMenu(false); handleOpenStartupGuide(); }}
                   >
                     Open guide
+                  </button>
+                )}
+                {isElectron && (
+                  <button
+                    className="app-menu-item"
+                    onClick={() => { setShowMenu(false); window.quartoReviewDesktop.openAutosaveFolder(); }}
+                  >
+                    Open autosave folder
                   </button>
                 )}
                 {isElectron && (

@@ -7,10 +7,11 @@
 }
 
 .academic-frontpage {
-  padding: 1rem;
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: rgb(249, 250, 251);
-  border-radius: 4px;
+  padding: 0.5rem 0 1.25rem;
+  font-family: var(--editor-current-font, system-ui, -apple-system, sans-serif);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -31,10 +32,10 @@
 }
 
 .primary-fields--article {
-  gap: 0.75rem;
-  padding: 1.75rem 0 1.25rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #E5E7EB;
+  gap: 0.4rem;
+  padding: 2.2rem 1.5rem 1.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
 }
 
 .additional-fields {
@@ -212,15 +213,15 @@
 .property-row--abstract .property-label {
   flex: none;
   width: fit-content;
-  margin: 0 auto 0.6rem;
-  padding: 0.2rem 0.8rem;
-  border-radius: 999px;
-  background: #eef4ff;
-  color: #35508c;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  margin: 0 auto 0.85rem;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #1f3d73;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: none;
 }
 
 .property-row--abstract .property-label::before {
@@ -228,9 +229,9 @@
 }
 
 .property-row--title .property-value input[data-property="title"] {
-  padding: 0.35rem 1rem;
-  font-size: clamp(2rem, 4vw, 2.9rem);
-  line-height: 1.12;
+  padding: 0.2rem 1rem 0.35rem;
+  font-size: clamp(2.35rem, 4.3vw, 3.35rem);
+  line-height: 1.06;
   font-weight: 600;
   letter-spacing: -0.03em;
   text-align: center;
@@ -238,9 +239,9 @@
 }
 
 .property-row--subtitle .property-value input[data-property="subtitle"] {
-  padding: 0.1rem 1rem 0.45rem;
-  font-size: 1.15rem;
-  line-height: 1.45;
+  padding: 0.15rem 1rem 0.55rem;
+  font-size: 1.22rem;
+  line-height: 1.5;
   text-align: center;
   color: #475569;
 }
@@ -249,26 +250,28 @@
 .property-row--author .property-value input[data-property="authors"],
 .property-row--affiliations .property-value input[data-property="affiliations"],
 .property-row--date .property-value input[data-property="date"] {
-  padding: 0.1rem 1rem;
-  font-size: 1rem;
+  padding: 0.12rem 1rem;
+  font-size: 1.02rem;
+  line-height: 1.55;
   text-align: center;
   color: #334155;
 }
 
 .property-row--abstract .property-value {
-  max-width: 760px;
+  max-width: 860px;
   margin: 0 auto;
 }
 
 .property-row--abstract .property-value textarea[data-property="abstract"] {
   width: 100%;
   margin-left: 0;
-  padding: 1rem 1.25rem;
+  padding: 1.05rem 1.3rem;
   font-size: 1rem;
   line-height: 1.7;
   text-align: left;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #f8fbff 0%, #f5f8fc 100%);
+  border-radius: 0 10px 10px 0;
+  border-left: 3px solid #3b82f6;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f8ff 100%);
   color: #1e293b;
 }
 
@@ -277,7 +280,7 @@
 }
 
 [data-theme="dark"] .property-row--abstract .property-label {
-  background: rgba(59, 130, 246, 0.16);
+  background: transparent;
   color: #bfd6ff;
 }
 
@@ -311,6 +314,7 @@
 }
 
 [data-theme="dark"] .property-row--abstract .property-value textarea[data-property="abstract"] {
+  border-left-color: #60a5fa;
   background: linear-gradient(180deg, #17212f 0%, #111827 100%);
   color: #e2e8f0;
 }

@@ -93,279 +93,215 @@ export const RawCell = Node.create({
 
     addNodeView() {
       return ({ node, getPos, editor }) => {
-        console.log('RawCell nodeView rendering with node:', node);
         const dom = document.createElement('div');
         dom.setAttribute('data-type', 'raw-cell');
         dom.classList.add('raw-cell');
-        
-        if (node.attrs.isYamlHeader && node.attrs.isAcademicArticle) {
-          console.log('Rendering academic frontpage');
-          dom.classList.add('academic-frontpage');
-          const yaml = node.attrs.parsedYaml || {};
-          
-          const table = document.createElement('div');
-          table.classList.add('properties-table');
-          
-          // Primary fields that should always be at the top
-          const primaryFields = ['title', 'subtitle', 'author', 'affiliations', 'date', 'abstract'];
-          
-          // Create primary fields section
-          const primarySection = document.createElement('div');
-          primarySection.classList.add('primary-fields');
-          primarySection.classList.add('primary-fields--article');
-          
-          // Create additional fields section
-          const additionalSection = document.createElement('div');
-          additionalSection.classList.add('additional-fields');
-          
-          // Helper function to create a basic property row
-          const createBasicRow = (key, value) => {
-            const row = document.createElement('div');
-            row.classList.add('property-row');
-            row.setAttribute('data-property', key);
-            row.classList.add(`property-row--${key.toLowerCase()}`);
-            
-            const labelDiv = document.createElement('div');
-            labelDiv.classList.add('property-label');
-            labelDiv.textContent = key.charAt(0).toUpperCase() + key.slice(1);
-            
-            const valueDiv = document.createElement('div');
-            valueDiv.classList.add('property-value');
-            
-            let input;
-            // Use textarea for abstract or if value is longer than 100 characters
-            if (key === 'abstract' || (value && value.length > 100)) {
-              input = document.createElement('textarea');
-              input.rows = '4';
-              input.spellcheck = true;
-            } else {
-              input = document.createElement('input');
-              input.type = 'text';
-              input.spellcheck = false;
-            }
-            
-            const setupInputHandling = (input) => {
-              // Prevent deletion of the field itself
-              input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace') {
-                  // If at start of field or field is empty, prevent deletion
-                  if (input.selectionStart === 0 && input.selectionEnd === 0) {
+        const renderNode = (renderedNode) => {
+          dom.className = 'raw-cell';
+          dom.replaceChildren();
+
+          if (renderedNode.attrs.isYamlHeader && renderedNode.attrs.isAcademicArticle) {
+            dom.classList.add('academic-frontpage');
+            const yaml = renderedNode.attrs.parsedYaml || {};
+
+            const table = document.createElement('div');
+            table.classList.add('properties-table');
+            const primaryFields = ['title', 'subtitle', 'author', 'affiliations', 'date', 'abstract'];
+
+            const primarySection = document.createElement('div');
+            primarySection.classList.add('primary-fields', 'primary-fields--article');
+
+            const additionalSection = document.createElement('div');
+            additionalSection.classList.add('additional-fields');
+
+            const createBasicRow = (key, value) => {
+              const row = document.createElement('div');
+              row.classList.add('property-row', `property-row--${key.toLowerCase()}`);
+              row.setAttribute('data-property', key);
+
+              const labelDiv = document.createElement('div');
+              labelDiv.classList.add('property-label');
+              labelDiv.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+
+              const valueDiv = document.createElement('div');
+              valueDiv.classList.add('property-value');
+
+              let input;
+              if (key === 'abstract' || (value && value.length > 100)) {
+                input = document.createElement('textarea');
+                input.rows = '4';
+                input.spellcheck = true;
+              } else {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.spellcheck = false;
+              }
+
+              const setupInputHandling = (field) => {
+                field.addEventListener('keydown', (e) => {
+                  if (e.key === 'Backspace' && field.selectionStart === 0 && field.selectionEnd === 0) {
                     e.preventDefault();
                     e.stopPropagation();
                   }
-                }
-                // Prevent deletion via Cut or Delete
-                if (e.key === 'Delete' || (e.key === 'x' && (e.ctrlKey || e.metaKey))) {
-                  if (input.selectionStart === 0 && input.selectionEnd === input.value.length) {
+                  if ((e.key === 'Delete' || (e.key === 'x' && (e.ctrlKey || e.metaKey))) &&
+                    field.selectionStart === 0 &&
+                    field.selectionEnd === field.value.length) {
                     e.preventDefault();
                     e.stopPropagation();
                   }
-                }
-              });
+                });
 
-              // Handle click events to maintain focus
-              input.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-              });
-              
-              input.addEventListener('click', (e) => {
-                e.stopPropagation();
-                input.focus();
-              });
-              
-              // Make the input non-draggable
-              input.draggable = false;
-            };
+                field.addEventListener('mousedown', (e) => {
+                  e.stopPropagation();
+                });
 
-            setupInputHandling(input);
-            
-            if (key === 'abstract' || (value && value.length > 100)) {
-              // Auto-expand textarea
-              const adjustHeight = () => {
-                input.style.height = 'auto';
-                input.style.height = input.scrollHeight + 'px';
+                field.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  field.focus();
+                });
+
+                field.draggable = false;
               };
-              
-              input.addEventListener('input', (e) => {
-                const newYaml = { ...yaml };
-                newYaml[key] = e.target.value;
-                adjustHeight();
-                
-                // Format the YAML
-                const formattedYaml = Object.entries(newYaml)
-                  .map(([k, v]) => `${k}: ${typeof v === 'string' ? JSON.stringify(v) : v}`)
-                  .join('\n');
-                
-                const yamlContent = `---\n${formattedYaml}\n---`;
-                
-                // Get the current position
-                const pos = getPos();
-                
-                // Create a transaction to update the node
-                const tr = editor.state.tr;
-                
-                // Update the node's attributes and content
-                if (typeof pos === 'number') {
-                  console.log('Updating YAML at position:', pos, 'with content:', yamlContent);
-                  tr.setNodeMarkup(pos, undefined, {
-                    content: yamlContent,
-                    parsedYaml: newYaml,
-                    formattedYaml: formattedYaml,
-                    isYamlHeader: true,
-                    isAcademicArticle: true
-                  });
-                  
-                  // Dispatch the transaction
-                  editor.view.dispatch(tr);
-                  console.log('Transaction dispatched');
-                }
-              });
-              
-              // Initial height adjustment
-              setTimeout(adjustHeight, 0);
-            } else {
-              input.addEventListener('input', (e) => {
-                const newYaml = { ...yaml };
-                
-                // Handle nested properties
-                const parent = e.target.closest('.property-row').getAttribute('data-parent');
-                const property = e.target.getAttribute('data-property');
-                
-                if (parent) {
-                  // This is a nested property
-                  if (!newYaml[parent]) {
-                    newYaml[parent] = {};
-                  }
-                  newYaml[parent][property] = e.target.value;
-                } else {
-                  // This is a top-level property
-                  newYaml[property] = e.target.value;
-                }
-                
-                // Format the YAML
+
+              const updateYamlNode = (newYaml) => {
                 const formattedYaml = Object.entries(newYaml)
                   .map(([k, v]) => {
-                    if (typeof v === 'object') {
+                    if (typeof v === 'object' && v !== null) {
                       const nested = Object.entries(v)
                         .map(([sk, sv]) => `  ${sk}: ${JSON.stringify(sv)}`)
                         .join('\n');
                       return `${k}:\n${nested}`;
                     }
-                    return `${k}: ${JSON.stringify(v)}`;
+                    return `${k}: ${typeof v === 'string' ? JSON.stringify(v) : v}`;
                   })
                   .join('\n');
-                
-                const yamlContent = `---\n${formattedYaml}\n---`;
-                
-                // Get the current position
-                const pos = getPos();
-                
-                // Create a transaction to update the node
-                const tr = editor.state.tr;
-                
-                // Update the node's attributes and content
-                if (typeof pos === 'number') {
-                  console.log('Updating YAML at position:', pos, 'with content:', yamlContent);
-                  tr.setNodeMarkup(pos, undefined, {
-                    content: yamlContent,
-                    parsedYaml: newYaml,
-                    formattedYaml: formattedYaml,
-                    isYamlHeader: true,
-                    isAcademicArticle: true
-                  });
-                  
-                  // Dispatch the transaction
-                  editor.view.dispatch(tr);
-                  console.log('Transaction dispatched');
-                }
-              });
-            }
-            
-            input.value = value || '';
-            input.setAttribute('data-property', key);
-            input.classList.add(`property-input--${key.toLowerCase()}`);
-            valueDiv.appendChild(input);
-            
-            row.appendChild(labelDiv);
-            row.appendChild(valueDiv);
-            return row;
-          };
 
-          // Helper function to create a property row
-          const createPropertyRow = (key, value) => {
-            // If value is an object or array, create rows for each nested entry
-            if (typeof value === 'object' && value !== null) {
-              const container = document.createElement('div');
-              
-              // Create the parent row first
-              const parentRow = createBasicRow(key, '');
-              container.appendChild(parentRow);
-              
-              // Then create child rows for each property in the object/array
-              Object.entries(value).forEach(([subKey, subValue]) => {
-                const childRow = createBasicRow(subKey, subValue);
-                childRow.setAttribute('data-parent', key);
-                container.appendChild(childRow);
-              });
-              
-              return container;
-            }
-            
-            // For primitive values, just create a basic row
-            return createBasicRow(key, value);
-          };
-          
-          // Sort fields into primary and additional
-          Object.entries(yaml).forEach(([key, value]) => {
-            if (primaryFields.includes(key.toLowerCase())) {
-              primarySection.appendChild(createPropertyRow(key, value));
+                const yamlContent = `---\n${formattedYaml}\n---`;
+                const pos = getPos();
+                if (typeof pos !== 'number') return;
+
+                const tr = editor.state.tr;
+                tr.setNodeMarkup(pos, undefined, {
+                  content: yamlContent,
+                  parsedYaml: newYaml,
+                  formattedYaml,
+                  isYamlHeader: true,
+                  isAcademicArticle: true,
+                });
+                editor.view.dispatch(tr);
+              };
+
+              setupInputHandling(input);
+
+              if (input.tagName === 'TEXTAREA') {
+                const adjustHeight = () => {
+                  input.style.height = 'auto';
+                  input.style.height = input.scrollHeight + 'px';
+                };
+
+                input.addEventListener('input', (e) => {
+                  const newYaml = { ...yaml, [key]: e.target.value };
+                  adjustHeight();
+                  updateYamlNode(newYaml);
+                });
+
+                setTimeout(adjustHeight, 0);
+              } else {
+                input.addEventListener('input', (e) => {
+                  const newYaml = { ...yaml };
+                  const parent = e.target.closest('.property-row').getAttribute('data-parent');
+                  const property = e.target.getAttribute('data-property');
+
+                  if (parent) {
+                    if (!newYaml[parent]) newYaml[parent] = {};
+                    newYaml[parent][property] = e.target.value;
+                  } else {
+                    newYaml[property] = e.target.value;
+                  }
+
+                  updateYamlNode(newYaml);
+                });
+              }
+
+              input.value = value || '';
+              input.setAttribute('data-property', key);
+              input.classList.add(`property-input--${key.toLowerCase()}`);
+              valueDiv.appendChild(input);
+              row.appendChild(labelDiv);
+              row.appendChild(valueDiv);
+              return row;
+            };
+
+            const createPropertyRow = (key, value) => {
+              if (typeof value === 'object' && value !== null) {
+                const container = document.createElement('div');
+                const parentRow = createBasicRow(key, '');
+                container.appendChild(parentRow);
+
+                Object.entries(value).forEach(([subKey, subValue]) => {
+                  const childRow = createBasicRow(subKey, subValue);
+                  childRow.setAttribute('data-parent', key);
+                  container.appendChild(childRow);
+                });
+
+                return container;
+              }
+
+              return createBasicRow(key, value);
+            };
+
+            Object.entries(yaml).forEach(([key, value]) => {
+              if (primaryFields.includes(key.toLowerCase())) {
+                primarySection.appendChild(createPropertyRow(key, value));
+              } else {
+                additionalSection.appendChild(createPropertyRow(key, value));
+              }
+            });
+
+            const additionalHeader = document.createElement('div');
+            additionalHeader.classList.add('additional-fields-header');
+            additionalHeader.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Additional Fields
+            `;
+
+            const additionalContent = document.createElement('div');
+            additionalContent.classList.add('additional-fields-content');
+
+            additionalHeader.addEventListener('click', () => {
+              additionalHeader.classList.toggle('expanded');
+              additionalContent.classList.toggle('expanded');
+            });
+
+            if (additionalSection.children.length > 0) {
+              additionalContent.appendChild(additionalSection);
+              table.appendChild(primarySection);
+              table.appendChild(additionalHeader);
+              table.appendChild(additionalContent);
             } else {
-              additionalSection.appendChild(createPropertyRow(key, value));
+              table.appendChild(primarySection);
             }
-          });
-          
-          // Create additional fields header with dropdown
-          const additionalHeader = document.createElement('div');
-          additionalHeader.classList.add('additional-fields-header');
-          additionalHeader.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Additional Fields
-          `;
-          
-          const additionalContent = document.createElement('div');
-          additionalContent.classList.add('additional-fields-content');
-          
-          // Add click handler for dropdown
-          additionalHeader.addEventListener('click', () => {
-            additionalHeader.classList.toggle('expanded');
-            additionalContent.classList.toggle('expanded');
-          });
-          
-          // Only add additional section if there are additional fields
-          if (additionalSection.children.length > 0) {
-            additionalContent.appendChild(additionalSection);
-            table.appendChild(primarySection);
-            table.appendChild(additionalHeader);
-            table.appendChild(additionalContent);
-          } else {
-            table.appendChild(primarySection);
+
+            dom.appendChild(table);
+            return;
           }
-          
-          dom.appendChild(table);
-        } else {
+
           const content = document.createElement('div');
           content.classList.add('raw-content');
-          content.textContent = node.attrs.content || '';
+          content.textContent = renderedNode.attrs.content || '';
           content.contentEditable = 'true';
           dom.appendChild(content);
-        }
+        };
+
+        renderNode(node);
 
         return {
           dom,
           update: (updatedNode) => {
             if (updatedNode.type.name !== node.type.name) return false;
+            renderNode(updatedNode);
             return true;
           },
           destroy: () => {
