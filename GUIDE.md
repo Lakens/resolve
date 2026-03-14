@@ -1,140 +1,231 @@
-# Guide: Working with Documents in Resolve
+# QuartoReview User Guide
 
-## Setup Requirements
+QuartoReview is a desktop application for editing and reviewing Quarto (`.qmd`), R Markdown (`.Rmd`), and Markdown (`.md`) documents. It provides a rich WYSIWYG editor with track changes, comments, references, R chunk preview, and version comparison.
 
-1. Your document must be in a GitHub repository
+---
 
-2. Your document should be either:
-   - A Jupyter notebook (`.ipynb`)
-   - A Quarto markdown document converted to `.ipynb` format
+## 1. Opening and Saving Files
 
-3. If you have a bibliography, the bibliography file ***must*** be named `references.bib` and ***must*** be located in the same directory as your notebook/document
+QuartoReview supports two modes: **local file mode** and **GitHub mode**. You can switch between them at any time.
 
+### Local File Mode (no account required)
 
-## GitHub Integration Process
+1. Click the **hamburger menu** (≡) in the top-right corner of the toolbar.
+2. Select **Open local file**.
+3. Browse to any `.qmd`, `.Rmd`, or `.md` file on your computer and open it.
+4. The file opens in the editor. The filename appears in the toolbar.
+5. To save, click the **Save** button (💾) in the toolbar, or use **Ctrl+S**. The file is saved back to its original location on your computer — no account or internet connection required.
 
-### Initial Setup
-1. Log into Resolve using GitHub OAuth authentication
-2. Select your repository from the available list
-3. Select the ducument within your repository
-4. The system will automatically load any existing `references.bib` file
-5. If you want to shared a document with others, click the "Share" button.
+In local file mode, **no data leaves your computer**.
 
+### GitHub Mode (optional)
 
-### File Management
-1. **Creating/Opening Documents**
-   - Select your repository
-   - Choose an existing notebook or create a new one
-   - The system will automatically load any existing `references.bib` file
+GitHub mode lets you load and save files directly from your GitHub repositories.
 
-2. **Saving Changes**
-   - Changes are saved directly to GitHub
-   - The system maintains version control through GitHub's commit system
+1. Click the **hamburger menu** (≡) and select **Set up GitHub access**.
+2. Follow the instructions to create a GitHub Personal Access Token (PAT) and enter it in the setup screen.
+3. Once connected, use the **repository** and **file** dropdowns in the toolbar to select a file from your GitHub account.
+4. To save, click the **Save** button. You will be prompted for a commit message before the file is saved back to GitHub.
 
-## Working with Citations
+> **Tip:** If you have a bibliography file (`references.bib`) in the same folder as your document, QuartoReview will load it automatically.
 
-### Bibliography Management
+### Supported File Formats
 
-1. The system will automatically detect and load the bibliography
-2. If you cite a DOI, the system will automatically update your `references.bib` file on GitHub
+| Extension | Description |
+|-----------|-------------|
+| `.qmd`    | Quarto Markdown |
+| `.Rmd`    | R Markdown |
+| `.md`     | Plain Markdown |
+| `.ipynb`  | Jupyter Notebook |
 
+---
 
-### Adding Citations
-1. While editing, use the citation tool in the WYSIWYG editor
-2. You can:
-   - Select text to add a citation (selections will have a "cite" and "comment" button hovering over them)
-   - Enter a valid DOI to automatically add a reference 
-   - The system will automatically update your `references.bib` file
+## 2. Editing, Commenting, and Tracking Changes
 
-   <p align="center">
-   <img src="https://github.com/MichelNivard/resolve/blob/master/assets/image.png?raw=true" alt="citation">
-   </p>
+### Editing
 
-### Citation Syntax
-1. In markdown cells:
-   - Use standard markdown citation syntax: `[@citation-key]`
-   - For multiple citations: `[@key1; @key2]`
-   - For citations with page numbers: `[@key1, p. 23]`
+The editor is a WYSIWYG (what-you-see-is-what-you-get) editor. You can type directly in the document, and formatting is rendered immediately. Standard text formatting is available through the toolbar:
 
-## Commenting
-1. Use the comment tool in the WYSIWYG editor
-2. You can:
-   - Select text and a comment icon will appear
+- **Bold**, *Italic*, Underline, ~~Strikethrough~~
+- Headings (H1–H4)
+- Bullet lists and numbered lists
+- Block quotes
+- Inline code and code blocks
+- Math equations (LaTeX syntax, rendered with MathJax)
 
-   <p align="center">
-   <img src="https://github.com/MichelNivard/resolve/blob/master/assets/image-1.png?raw=true" alt="Comment icon appears on text selection">
-   </p>
+Code chunks (R, Python, etc.) appear as distinct blocks with syntax highlighting. Their chunk options (e.g., `echo=FALSE`, chunk names) are preserved exactly when saving.
 
-   - Enter your comment in the textfield
+### Comments
 
-   <p align="center">
-   <img src="https://github.com/MichelNivard/resolve/blob/master/assets/image-2.png?raw=true" alt="Comment text field">
-   </p>
-
-   - The comment will be added to the selected text and appear in the sidebar.
-
-   <p align="center">
-   <img src="https://github.com/MichelNivard/resolve/blob/master/assets/image-3.png?raw=true" alt="Comment in sidebar">
-   </p>
-
-
-
-## Collaboration Features
-
-### Important Note on Collaborative Editing
-Resolve does **not** support simultaneous collaborative editing. Instead:
-- The system displays other users who are currently viewing the document
-- This presence detection helps prevent concurrent editing conflicts
-- Only one user should edit the document at a time
-
-<p align="center">
-<img src="https://github.com/MichelNivard/resolve/blob/master/assets/image-4.png?raw=true" alt="User presence indication">
-</p>
+1. Select any text in the document.
+2. A small toolbar will appear above the selection — click the **comment icon** (💬).
+3. Type your comment in the text field that appears and press **Enter** or click **Add**.
+4. The commented text is highlighted, and the comment appears in the **sidebar** on the right.
+5. Click a comment in the sidebar to navigate to the corresponding text.
+6. To resolve a comment, click the **checkmark** (✓) next to it in the sidebar.
 
 ### Track Changes
-1. **Activating Track Changes**
-   - Click the "Track Changes" toggle in the editor toolbar
-   - When activated, all your edits will be marked as suggestions
-   - Track changes mode is indicated by a highlighted icon in the toolbar
 
-   <p align="center">
-   <img src="https://github.com/MichelNivard/resolve/blob/master/assets/image-5.png?raw=true" alt="Track changes activation">
-   </p>
+Track changes records all edits as suggestions that can be accepted or rejected — useful for collaborative review.
 
-2. **Working with Track Changes**
-   - Added text appears in a different color (in blue)
-   - Deleted text appears struck through (in red)
+1. Click the **Track Changes** button in the toolbar (it highlights when active).
+2. While track changes is on:
+   - **Added text** appears in blue.
+   - **Deleted text** appears in red with strikethrough.
+3. To review changes, use the **accept** (✓) and **reject** (✗) buttons that appear next to each change, or use the toolbar buttons to accept or reject all changes at once.
+4. Turn off track changes by clicking the button again. New edits will no longer be marked.
 
-<p align="center">
-<img src="https://github.com/MichelNivard/resolve/blob/master/assets/image-6.png?raw=true" alt="Track changes example">
-</p>
+### Sharing (GitHub mode only)
 
-3. **Reviewing Changes**
+Click the **Share** button in the toolbar to get a shareable link to the document on GitHub, or to invite collaborators by GitHub username.
 
-   - For each change, you can:
-     - Accept the change (incorporates it into the document)
-     - Reject the change (removes the suggestion)
+---
 
+## 3. Adding References
 
-### Sharing Documents
-1. Use the Share button in the editor toolbar
-2. You can:
-   - Invite collaborators through GitHub Usernames
-   - Share direct links to the document
+QuartoReview has built-in support for academic references using `.bib` bibliography files.
 
-<p align="center">
-<img src="https://github.com/MichelNivard/resolve/blob/master/assets/image-7.png?raw=true" alt="Share document dialog">
-</p>
+### Setting Up a Bibliography
 
-## Best Practices
-1. Always ensure your `references.bib` file is up to date
-2. Commit changes regularly
-3. Use track changes when working with collaborators
-4. Resolve comments once they've been addressed
-5. Be aware of other users viewing the document to avoid editing conflicts
+- Place a `references.bib` file in the same directory as your document.
+- QuartoReview will detect and load it automatically when you open the file.
 
-## Technical Notes
-- The system automatically handles file conversion between formats
-- Bibliography updates are managed through the backend API
-- All changes are version-controlled through GitHub
-- The editor provides WYSIWYG markdown editing with math equation support
+### Inserting a Citation
+
+1. Position your cursor where you want the citation, or select some text.
+2. A small toolbar appears — click the **cite icon** (📖).
+3. In the citation dialog, you can:
+   - **Search your existing bibliography** by author, title, or key and select an entry.
+   - **Enter a DOI** to automatically fetch the reference from the internet and add it to your `references.bib` file.
+4. The citation is inserted as `[@citation-key]` in the source. In the WYSIWYG view it renders as a formatted inline citation.
+
+### Citation Syntax (for manual editing)
+
+If you prefer to edit citations directly in the source, use standard Pandoc citation syntax:
+
+| Syntax | Result |
+|--------|--------|
+| `[@smith2020]` | Single citation |
+| `[@smith2020; @jones2021]` | Multiple citations |
+| `[@smith2020, p. 23]` | Citation with page number |
+| `[-@smith2020]` | Suppress author name |
+
+### Bibliography File
+
+When you add a citation via DOI, the reference is automatically appended to your `references.bib` file and saved alongside your document (either locally or to GitHub).
+
+---
+
+## 4. Previewing and Evaluating R Chunks
+
+QuartoReview can render and preview R code chunks directly in the editor, so you can see output without leaving the app.
+
+### R Chunk Blocks
+
+R code chunks appear as distinct blocks in the editor, labeled with the language (e.g., `r`). Chunk options such as `echo=FALSE`, `eval=FALSE`, or chunk names are displayed and preserved exactly when saving — they are never silently removed.
+
+A typical chunk looks like this in source:
+
+````
+```{r my-chunk, echo=FALSE}
+summary(mtcars)
+```
+````
+
+### Previewing Output
+
+1. Click the **Run** button (▶) inside an R chunk, or use the **Run All** button in the toolbar to evaluate all chunks.
+2. Output appears directly below the chunk: tables, plots, and text output are all rendered inline.
+3. If R is not installed or not available, chunk output cannot be evaluated locally. The chunk text is still fully editable.
+
+### Chunk Options
+
+Common chunk options you can set directly in the chunk header:
+
+| Option | Effect |
+|--------|--------|
+| `echo=FALSE` | Hide code, show output |
+| `eval=FALSE` | Show code, do not run |
+| `include=FALSE` | Run code, hide everything |
+| `fig.cap="..."` | Add a figure caption |
+
+These options are written and preserved verbatim — editing them in the WYSIWYG view updates the underlying source correctly.
+
+---
+
+## 5. Comparing and Exporting Differences Across Versions
+
+QuartoReview includes a **Diff Viewer** that lets you compare two versions of a document and export the differences.
+
+### Opening the Diff Viewer
+
+1. Click the **Diff** button in the toolbar (or select it from the menu).
+2. The diff viewer opens in a split-pane view.
+
+### Comparing Versions
+
+You can compare:
+- **Two GitHub commits**: Select a repository and choose two commits from the dropdowns. The diff is computed from the raw `.qmd`/`.Rmd`/`.md` source files.
+- **Current document vs. saved version**: The diff highlights what has changed since the last save.
+
+Differences are shown line by line:
+- **Green lines** — added content
+- **Red lines** — removed content
+- **Unchanged lines** — shown for context
+
+### Exporting Differences
+
+1. In the diff viewer, click **Export** (or **Download**).
+2. The diff is exported as a formatted document (Word `.docx` or plain text) showing added and removed content, suitable for sharing with collaborators or reviewers who do not use QuartoReview.
+
+---
+
+## 6. Interface
+
+### Toolbar (top bar)
+
+The toolbar runs across the top of the editor and contains the main controls:
+
+| Element | Description |
+|---------|-------------|
+| **Repository / File dropdowns** | (GitHub mode) Select which repo and file to load |
+| **Local filename** | (Local mode) Shows the name of the open file |
+| **Save** (💾) | Save the current document |
+| **Track Changes** | Toggle track-changes mode on/off |
+| **Bold / Italic / etc.** | Text formatting buttons |
+| **Heading level** | Set heading level (H1–H4) |
+| **Lists** | Bullet and numbered list buttons |
+| **Cite** | Open the citation/reference dialog |
+| **Comment** | Add a comment to selected text |
+| **Run / Run All** | Execute R chunks |
+| **Diff** | Open the diff/version comparison view |
+| **Share** | (GitHub mode) Share the document |
+| **Dark mode** (🌙) | Toggle between light and dark theme |
+| **Menu** (≡) | Hamburger menu: Open local file, Set up GitHub, Feedback |
+
+### Sidebar
+
+The sidebar on the right shows:
+- **Comments** — all comments in the document, in order. Click a comment to jump to it in the editor.
+- **Track changes** — pending suggestions that can be accepted or rejected.
+
+Click the sidebar toggle button to show or hide the sidebar.
+
+### Presence Indicators (GitHub mode)
+
+When multiple people have the same GitHub document open, their avatars appear in the toolbar. QuartoReview does **not** support simultaneous editing — presence indicators help you avoid editing at the same time as someone else.
+
+### Dark Mode
+
+Click the **moon icon** (🌙) in the toolbar to switch to dark mode. The setting persists across sessions.
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+S | Save file |
+| Ctrl+B | Bold |
+| Ctrl+I | Italic |
+| Ctrl+Z | Undo |
+| Ctrl+Y | Redo |
+| Ctrl+Shift+C | Add comment |

@@ -140,8 +140,37 @@ function showSetupWindow() {
 // Backend
 // ---------------------------------------------------------------------------
 
-function spawnBackend() {
+function killOrphanOnPort(port) {
+  // On Windows, use netstat to find and kill any process holding the port
+  // (handles the case where a previous Electron crash left the backend running)
+  return new Promise((resolve) => {
+    const { exec } = require('child_process');
+    exec(`netstat -ano -p TCP | findstr ":${port} "`, (err, stdout) => {
+      if (err || !stdout.trim()) return resolve();
+      const lines = stdout.trim().split('\n');
+      const pids = new Set();
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 5) {
+          const state = parts[3];
+          const pid = parseInt(parts[4], 10);
+          if ((state === 'LISTENING' || state === 'ESTABLISHED') && pid && pid !== process.pid) {
+            pids.add(pid);
+          }
+        }
+      }
+      if (pids.size === 0) return resolve();
+      let remaining = pids.size;
+      for (const pid of pids) {
+        exec(`taskkill /PID ${pid} /F`, () => { if (--remaining === 0) resolve(); });
+      }
+    });
+  });
+}
+
+async function spawnBackend() {
   if (backendProcess) return;
+  await killOrphanOnPort(BACKEND_PORT);
 
   const backendScriptPath = getBackendScriptPath();
   const backendDir = path.dirname(backendScriptPath);
@@ -248,23 +277,29 @@ function createMainWindow() {
     return { action: 'deny' };
   });
 
+  // The renderer's beforeunload handler blocks window close silently in
+  // Electron. Override it: allow closing but ask via a native dialog instead.
+  mainWindow.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type: 'question',
+      buttons: ['Leave', 'Cancel'],
+      defaultId: 0,
+      cancelId: 1,
+      message: 'You have unsaved changes.',
+      detail: 'Close anyway?',
+    });
+    if (choice === 0) event.preventDefault(); // 0 = "Leave" → allow close
+  });
+
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => { mainWindow = null; });
   return mainWindow;
 }
 
 async function launchApp() {
-  // Show setup wizard on every launch until a valid token is saved
-  if (needsSetup()) {
-    await showSetupWindow();
-    // If they closed the window without saving, quit
-    if (needsSetup()) {
-      app.quit();
-      return;
-    }
-  }
-
-  spawnBackend();
+  // GitHub setup is now optional — available from the in-app menu.
+  // The app launches regardless of whether a token has been configured.
+  await spawnBackend();
   await waitForPort(BACKEND_PORT);
 
   const startUrl = ELECTRON_RENDERER_URL || `http://localhost:${BACKEND_PORT}`;
@@ -273,6 +308,47 @@ async function launchApp() {
   const window = createMainWindow();
   await window.loadURL(startUrl);
 }
+
+// ---------------------------------------------------------------------------
+// IPC — local file access & in-app GitHub setup
+// ---------------------------------------------------------------------------
+
+ipcMain.handle('open-local-file', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Open file',
+    filters: [
+      { name: 'Markdown files', extensions: ['qmd', 'Rmd', 'rmd', 'md'] },
+      { name: 'All files', extensions: ['*'] },
+    ],
+    properties: ['openFile'],
+  });
+  if (canceled || filePaths.length === 0) return null;
+  const filePath = filePaths[0];
+  const content = fs.readFileSync(filePath, 'utf8');
+  return { filePath, content };
+});
+
+ipcMain.handle('save-local-file', async (_event, content, filePath) => {
+  if (filePath) {
+    fs.writeFileSync(filePath, content, 'utf8');
+    return { filePath };
+  }
+  // No path: ask where to save
+  const { canceled, filePath: chosenPath } = await dialog.showSaveDialog({
+    title: 'Save file',
+    filters: [
+      { name: 'Markdown files', extensions: ['qmd', 'Rmd', 'rmd', 'md'] },
+      { name: 'All files', extensions: ['*'] },
+    ],
+  });
+  if (canceled || !chosenPath) return null;
+  fs.writeFileSync(chosenPath, content, 'utf8');
+  return { filePath: chosenPath };
+});
+
+ipcMain.handle('show-github-setup', async () => {
+  await showSetupWindow();
+});
 
 // ---------------------------------------------------------------------------
 // App lifecycle

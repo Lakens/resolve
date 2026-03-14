@@ -1,97 +1,68 @@
 # Privacy Policy
 
-Last updated: January 22, 2025
+Last updated: March 14, 2026
 
 ## Introduction
 
-This Privacy Policy explains how Resolve ("we", "our", or "us") collects, uses, and protects your information when you use our WYSIWYG Jupyter Notebook Editor ("the Service"). We are committed to protecting your privacy and handling your data in an open and transparent manner.
+This Privacy Policy explains how QuartoReview collects, uses, and protects your information. QuartoReview is a desktop application that runs entirely on your own computer — it is not a web service or cloud platform. We are committed to your privacy, and by design, the app collects as little data as possible.
 
-## Information We Collect
+## Two modes of use
 
-### 1. Account Information
-- GitHub account information (username, email) when you authenticate through GitHub OAuth
-- Repository access permissions granted through GitHub
+QuartoReview can be used in two ways, with different privacy implications:
 
-### 2. Usage Data
-- Notebook content and editing history
-- Comments and collaboration data
-- Citation and reference information
-- Browser type and version
-- Access timestamps
-- Session duration
+### 1. Local file mode (no account required)
 
-### 3. User-Generated Content
-- Jupyter notebook contents
-- Comments and annotations
-- Bibliography and citation data
-- Collaboration history
+When you open and edit local files from your computer without connecting to GitHub, **QuartoReview collects no data whatsoever.** Your files stay on your computer. Nothing is sent over the internet.
 
-## How We Use Your Information
+### 2. GitHub mode (optional)
 
-We use the collected information for:
-- Authenticating you through GitHub
-- Providing access to your repositories
-- Enabling collaboration features
-- Managing file version control
-- Maintaining citation and reference systems
+If you choose to connect GitHub to load and save files from your GitHub repositories, the following applies.
 
-## Data Storage and Security
+## What we collect in GitHub mode
 
-### GitHub Integration
-All notebook files and related content are stored in your GitHub repositories. We do not maintain separate copies of your notebooks. 
+### GitHub authentication
 
-### Temporary Data
-We temporarily cache yout data in your browser to:
+When you connect GitHub, you provide a GitHub Personal Access Token (PAT). This token is stored **only on your own computer**, in your local application data folder (`%APPDATA%\quartoreview\.env` on Windows). It is never sent to any QuartoReview server — because there is no QuartoReview server. The token is used exclusively to communicate directly between your computer and GitHub's API.
 
-- Manage active editing sessions
-- Enable collaboration features
+### Repository and file content
 
-This temporary data is stored only in your browser and is automatically cleared when you close the browser tab or window. We do not store any temporary data on our servers.
+When you load or save a file via GitHub, your computer communicates directly with GitHub. QuartoReview does not see, log, or store this content. It passes through the local backend (running on your own machine on port 3001) and goes directly to GitHub.
 
-## Data Sharing
+### Session data
 
-We do not sell, trade, or rent your personal information to third parties. Your data is shared only:
+A session cookie is used to keep you authenticated within the local app session. This cookie is stored only in your browser session and is cleared when you close the app. It never leaves your computer.
 
-- With GitHub, as necessary for the Service's core functionality, e.g. for authentication, to invite collaborators, to download notebooks, or to save a notebook you edited.
+## What we do NOT collect
 
-- If you opt to explicitly share a notebook with others, this means you grant reporsitory level access to the other user through GitHub repository permissions.
+- No usage analytics
+- No tracking or telemetry
+- No crash reports sent to external servers
+- No marketing or advertising data
+- No content of your documents
+- No server-side logs (there is no QuartoReview server)
 
-- As required by law or to protect our rights
-
-## Third-Party Services
+## Third-party services
 
 ### GitHub
-Our Service integrates with GitHub for authentication and storage. When you use our Service, you are also subject to GitHub's Privacy Policy. We recommend reviewing their privacy policy at https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement
 
-## Hosting on DigitalOcean
+If you use GitHub mode, you are subject to [GitHub's Privacy Policy](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement). QuartoReview only communicates with GitHub using your own credentials, on your behalf.
 
-Our Service is hosted on a backend server which runs on a DigitalOcean server in Amsterdam, the Netherlands (i.e. in the EU). We use their services to provide a robust and secure platform for our users. For more information, please visit https://www.digitalocean.com
+### LanguageTool (optional)
 
-## Frontend hosting on Vercel
+If you use the grammar and spell-checking feature, text from your document is sent to a LanguageTool server for analysis. By default this uses LanguageTool's public API. You can configure a local LanguageTool server to keep all text on your computer.
 
-Our frontend is hosted on Vercel. We use their services to provide a robust and secure platform for our users. For more information, please visit https://vercel.com
+## Data storage and security
 
-## Your Rights
+All data — your documents, your GitHub token, your session — is stored locally on your computer. You are in full control. Uninstalling the app and deleting `%APPDATA%\quartoreview` removes everything.
 
-You have the right to:
-- Access your personal information
-- Correct inaccurate data
-- Request deletion of your data
-- Withdraw GitHub access permissions
-- Export your data
+## Your rights
 
-## Changes to This Policy
+Because QuartoReview stores no data on any external server, there is no personal data held by the developers to access, correct, or delete. Your data is entirely your own, stored on your own devices.
 
-We may update this Privacy Policy from time to time. We will notify users of any material changes by posting the new Privacy Policy on this page and updating the "Last updated" date.
+## Changes to this policy
 
-## Contact Us
+We may update this Privacy Policy from time to time. Changes will be reflected by an updated date at the top of this document in the GitHub repository.
 
-If you have questions about this Privacy Policy, please create an issue in our GitHub repository: https://github.com/MichelNivard/resolve
+## Contact
 
-## Cookies
-
-We use  essential cookies only for maintaining your session (i.e. to keep you logged in while you edit, enableing you to save) and GitHub authentication. We do not use any other cookies. No tracking or marketing cookies are used.
-
-## Children's Privacy
-
-Our Service is not intended for children under 13. We do not knowingly collect personal information from children under 13.
+If you have questions about this Privacy Policy, please open an issue at [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview).

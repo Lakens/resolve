@@ -56,7 +56,7 @@ const ShareModal = ({ isOpen, onClose, repository, filePath }) => {
     }
   };
 
-  const shareText = `Hi, I'd like to collaborate with you on a document in Resolve. Click this link to join: ${shareLink}`;
+  const shareText = `Hi, I'd like to collaborate with you on a document in QuartoReview. Click this link to join: ${shareLink}`;
 
   if (!isOpen) return null;
 

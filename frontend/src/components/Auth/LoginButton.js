@@ -86,7 +86,7 @@ const LoginButton = () => {
   return (
       <div className="login-card">
       <p>
-        Resolve is your seamless solution for collaborating on Quarto (`.qmd`), R Markdown (`.Rmd`), Markdown (`.md`), and Jupyter (`.ipynb`) documents. To get started, please sign in with your GitHub account.
+        QuartoReview is a WYSIWYG editor for Quarto (`.qmd`), R Markdown (`.Rmd`), Markdown (`.md`), and Jupyter (`.ipynb`) documents. To collaborate via GitHub, please sign in below.
       </p>
       {!authConfigured && (
         <div style={{
@@ -101,7 +101,7 @@ const LoginButton = () => {
           GitHub is not configured yet. Click the button below and QuartoReview will guide you through connecting the app to GitHub from inside the UI.
         </div>
       )}
-      <p>Don't have any .ipynb files to test Resolve? Go to GitHub and fork: https://github.com/MichelNivard/writing-together</p>
+      <p>Don't have a file to try? Download a sample from <a href="https://github.com/Lakens/QuartoReview" target="_blank" rel="noreferrer">github.com/Lakens/QuartoReview</a> or open a local file from the menu.</p>
       <p>
         Don't have a GitHub account yet?{' '}
         <a href="https://github.com/join">
@@ -127,77 +127,43 @@ const LoginButton = () => {
           <button className="close-button" onClick={() => setShowPrivacy(false)}>×</button>
           <div className="privacy-text">
             <h1>Privacy Policy</h1>
-            <p>Last updated: January 22, 2025</p>
+            <p>Last updated: March 14, 2026</p>
 
             <h2>Introduction</h2>
-            <p>This Privacy Policy explains how Resolve ("we", "our", or "us") collects, uses, and protects your information when you use our WYSIWYG Jupyter Notebook Editor ("the Service"). We are committed to protecting your privacy and handling your data in an open and transparent manner.</p>
+            <p>QuartoReview is a desktop application that runs entirely on your own computer — it is not a web service or cloud platform. By design, it collects as little data as possible.</p>
 
-            <h2>Information We Collect</h2>
-            <h3>1. Account Information</h3>
+            <h2>Local file mode</h2>
+            <p>When you open and edit local files without connecting to GitHub, <strong>QuartoReview collects no data whatsoever.</strong> Your files stay on your computer. Nothing is sent over the internet.</p>
+
+            <h2>GitHub mode (optional)</h2>
+            <p>If you choose to connect GitHub to load and save files from your repositories, the following applies.</p>
+
+            <h3>Your GitHub token</h3>
+            <p>When you connect GitHub, you provide a Personal Access Token (PAT). This token is stored <strong>only on your own computer</strong> and is never sent to any QuartoReview server — because there is no QuartoReview server. It is used exclusively to communicate directly between your computer and GitHub's API.</p>
+
+            <h3>Repository content</h3>
+            <p>When you load or save a file, your computer communicates directly with GitHub. QuartoReview does not see, log, or store your document content. All files are stored in your own GitHub repositories.</p>
+
+            <h3>Session data</h3>
+            <p>A session cookie keeps you authenticated within the local app session. It is stored only in your browser session and is cleared when you close the app. It never leaves your computer.</p>
+
+            <h2>What we do not collect</h2>
             <ul>
-              <li>GitHub account information (username, email) when you authenticate through GitHub OAuth</li>
-              <li>Repository access permissions granted through GitHub</li>
+              <li>No usage analytics or telemetry</li>
+              <li>No crash reports sent externally</li>
+              <li>No tracking or marketing data</li>
+              <li>No document content stored on any server</li>
             </ul>
 
-            <h3>2. Usage Data</h3>
-            <ul>
-              <li>Notebook content and editing history</li>
-              <li>Comments and collaboration data</li>
-              <li>Citation and reference information</li>
-              <li>Browser type and version</li>
-              <li>Access timestamps</li>
-              <li>Session duration</li>
-            </ul>
-
-            <h2>Data Storage and Security</h2>
-            <h3>GitHub Integration</h3>
-            <p>All notebook files and related content are stored in your GitHub repositories. We do not maintain separate copies of your notebooks.</p>
-
-            <h3>Temporary Data</h3>
-            <p>We temporarily cache data in your browser to:</p>
-            <ul>
-              <li>Manage active editing sessions</li>
-              <li>Enable collaboration features</li>
-            </ul>
-            <p>This temporary data is stored only in your browser and is automatically cleared when you close the browser tab or window. We do not store any temporary data on our servers.</p>
-
-            <h2>Data Sharing</h2>
-            <p>We do not sell, trade, or rent your personal information to third parties. Your data is shared only:</p>
-            <ul>
-              <li>With GitHub, as necessary for the Service's core functionality, e.g. for authentication, to invite collaborators, to download notebooks, or to save a notebook you edited.</li>
-              <li>If you opt to explicitly share a notebook with others, this means you grant repository level access to the other user through GitHub repository permissions.</li>
-              <li>As required by law or to protect our rights</li>
-            </ul>
-
-            <h2>Third-Party Services</h2>
+            <h2>Third-party services</h2>
             <h3>GitHub</h3>
-            <p>Our Service integrates with GitHub for authentication and storage. When you use our Service, you are also subject to GitHub's Privacy Policy. We recommend reviewing their privacy policy at <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub's Privacy Statement</a></p>
+            <p>If you use GitHub mode, you are subject to <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub's Privacy Policy</a>. QuartoReview only communicates with GitHub using your own credentials, on your behalf.</p>
 
-            <h2>Hosting</h2>
-            <h3>Backend on DigitalOcean</h3>
-            <p>Our Service is hosted on a backend server which runs on a DigitalOcean server in Amsterdam, the Netherlands (i.e. in the EU). We use their services to provide a robust and secure platform for our users. For more information, please visit <a href="https://www.digitalocean.com" target="_blank" rel="noopener noreferrer">DigitalOcean</a></p>
+            <h3>LanguageTool (optional)</h3>
+            <p>If you use the grammar and spell-checking feature, text from your document is sent to a LanguageTool server. You can configure a local LanguageTool server to keep all text on your computer.</p>
 
-            <h3>Frontend on Vercel</h3>
-            <p>Our frontend is hosted on Vercel. We use their services to provide a robust and secure platform for our users. For more information, please visit <a href="https://vercel.com" target="_blank" rel="noopener noreferrer">Vercel</a></p>
-
-            <h2>Your Rights</h2>
-            <p>You have the right to:</p>
-            <ul>
-              <li>Access your personal information</li>
-              <li>Correct inaccurate data</li>
-              <li>Request deletion of your data</li>
-              <li>Withdraw GitHub access permissions</li>
-              <li>Export your data</li>
-            </ul>
-
-            <h2>Contact Us</h2>
-            <p>If you have questions about this Privacy Policy, please create an issue in our GitHub repository: <a href="https://github.com/MichelNivard/resolve" target="_blank" rel="noopener noreferrer">https://github.com/MichelNivard/resolve</a></p>
-
-            <h2>Cookies</h2>
-            <p>We use essential cookies only for maintaining your session (i.e. to keep you logged in while you edit, enabling you to save) and GitHub authentication. We do not use any other cookies. No tracking or marketing cookies are used.</p>
-
-            <h2>Children's Privacy</h2>
-            <p>Our Service is not intended for children under 13. We do not knowingly collect personal information from children under 13.</p>
+            <h2>Contact</h2>
+            <p>Questions about this Privacy Policy? Please open an issue at <a href="https://github.com/Lakens/QuartoReview" target="_blank" rel="noopener noreferrer">github.com/Lakens/QuartoReview</a>.</p>
           </div>
         </div>
       </div>

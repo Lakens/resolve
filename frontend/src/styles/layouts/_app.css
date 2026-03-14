@@ -177,6 +177,72 @@ body {
   color: var(--color-primary-active);
 }
 
+/* ── Local filename label ────────────────────────────────────────────────── */
+
+.hdr-local-filename {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  height: 32px;
+  line-height: 32px;
+}
+
+/* ── App menu (⋮ dropdown) ───────────────────────────────────────────────── */
+
+.app-menu {
+  position: relative;
+  margin-left: auto;
+}
+
+.app-menu-btn {
+  padding: 0 12px;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  font-family: var(--ui-font);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.1s;
+}
+
+.app-menu-item:hover {
+  background: var(--color-surface-muted);
+}
+
 /* ── Notification banner ─────────────────────────────────────────────────── */
 
 .notification {
