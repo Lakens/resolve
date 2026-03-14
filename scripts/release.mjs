@@ -24,11 +24,16 @@ const filesToUpdate = [
 ];
 
 function runGit(args, options = {}) {
-  const result = spawnSync('git', args, {
+  const gitBinary = process.platform === 'win32' ? 'git.exe' : 'git';
+  const result = spawnSync(gitBinary, args, {
     cwd: repoRoot,
     encoding: 'utf8',
     stdio: options.capture ? 'pipe' : 'inherit',
   });
+
+  if (result.error) {
+    throw result.error;
+  }
 
   if (result.status !== 0) {
     if (options.capture && result.stderr) {
