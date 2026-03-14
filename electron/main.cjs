@@ -319,6 +319,12 @@ function stopBackend() {
   setTimeout(() => { if (!child.killed) child.kill('SIGKILL'); }, 3000);
 }
 
+function exitForSmokeTest(code = 0) {
+  quitting = true;
+  stopBackend();
+  setTimeout(() => app.exit(code), 250);
+}
+
 function waitForUrl(urlString, timeoutMs = 20000) {
   const start = Date.now();
   const client = urlString.startsWith('https:') ? https : http;
@@ -401,7 +407,7 @@ async function launchApp() {
   await window.loadURL(startUrl);
 
   if (IS_SMOKE_TEST) {
-    setTimeout(() => app.quit(), 1500);
+    setTimeout(() => exitForSmokeTest(0), 1500);
   }
 }
 
@@ -467,6 +473,10 @@ app.whenReady().then(async () => {
     await launchApp();
   } catch (error) {
     process.exitCode = 1;
+    if (IS_SMOKE_TEST) {
+      exitForSmokeTest(1);
+      return;
+    }
     dialog.showErrorBox('Failed to Launch QuartoReview', error.message);
     app.quit();
   }
