@@ -140,8 +140,37 @@ function showSetupWindow() {
 // Backend
 // ---------------------------------------------------------------------------
 
-function spawnBackend() {
+function killOrphanOnPort(port) {
+  // On Windows, use netstat to find and kill any process holding the port
+  // (handles the case where a previous Electron crash left the backend running)
+  return new Promise((resolve) => {
+    const { exec } = require('child_process');
+    exec(`netstat -ano -p TCP | findstr ":${port} "`, (err, stdout) => {
+      if (err || !stdout.trim()) return resolve();
+      const lines = stdout.trim().split('\n');
+      const pids = new Set();
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 5) {
+          const state = parts[3];
+          const pid = parseInt(parts[4], 10);
+          if ((state === 'LISTENING' || state === 'ESTABLISHED') && pid && pid !== process.pid) {
+            pids.add(pid);
+          }
+        }
+      }
+      if (pids.size === 0) return resolve();
+      let remaining = pids.size;
+      for (const pid of pids) {
+        exec(`taskkill /PID ${pid} /F`, () => { if (--remaining === 0) resolve(); });
+      }
+    });
+  });
+}
+
+async function spawnBackend() {
   if (backendProcess) return;
+  await killOrphanOnPort(BACKEND_PORT);
 
   const backendScriptPath = getBackendScriptPath();
   const backendDir = path.dirname(backendScriptPath);
@@ -270,7 +299,7 @@ function createMainWindow() {
 async function launchApp() {
   // GitHub setup is now optional — available from the in-app menu.
   // The app launches regardless of whether a token has been configured.
-  spawnBackend();
+  await spawnBackend();
   await waitForPort(BACKEND_PORT);
 
   const startUrl = ELECTRON_RENDERER_URL || `http://localhost:${BACKEND_PORT}`;
