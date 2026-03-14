@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "private": true,
   "description": "Electron desktop shell for QuartoReview",
+  "license": "MIT",
   "main": "electron/main.cjs",
   "scripts": {
     "install:backend": "npm install --prefix backend",

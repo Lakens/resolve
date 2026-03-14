@@ -229,7 +229,7 @@ QuartoReview/
 
 ## License
 
-Elastic License v2 (ELv2) - see [LICENSE.md](LICENSE.md).
+MIT License - see [LICENSE.md](LICENSE.md).
 
 ---
 
