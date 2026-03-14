@@ -14,6 +14,7 @@ export const defaultFrontendUrl = isDesktopMode
 
 export const backendEnvPath = process.env.BACKEND_ENV_PATH || path.resolve(__dirname, '.env');
 export const sessionDir = process.env.SESSION_DIR || path.resolve(__dirname, 'sessions');
+export const backendHealthToken = process.env.BACKEND_HEALTH_TOKEN || '';
 
 export const allowedOrigins = isHostedProduction
   ? ['https://www.resolve.pub', 'https://resolve.pub']

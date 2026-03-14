@@ -15,8 +15,7 @@ router.get('/', async (req, res) => {
 
     const octokit = new Octokit({ auth: token });
 
-    // Get repositories where user is a collaborator
-    const { data: repos } = await octokit.repos.listForAuthenticatedUser({
+    const repos = await octokit.paginate(octokit.repos.listForAuthenticatedUser, {
       affiliation: 'owner,collaborator',
       sort: 'updated',
       per_page: 100

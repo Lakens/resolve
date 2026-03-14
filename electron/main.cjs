@@ -2,7 +2,6 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
-const net = require('net');
 const path = require('path');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
@@ -11,8 +10,9 @@ let mainWindow = null;
 let backendProcess = null;
 let quitting = false;
 
-const BACKEND_PORT = 3001;
+const DEFAULT_BACKEND_PORT = 3001;
 const ELECTRON_RENDERER_URL = process.env.ELECTRON_RENDERER_URL;
+const IS_SMOKE_TEST = process.env.QUARTOREVIEW_SMOKE_TEST === '1';
 
 function getBackendScriptPath() {
   if (app.isPackaged) {
@@ -30,6 +30,17 @@ function getFrontendDistPath() {
 
 function getDesktopEnvPath() {
   return path.join(app.getPath('userData'), '.env');
+}
+
+function getBackendPidPath() {
+  return path.join(app.getPath('userData'), 'backend.pid');
+}
+
+function getBundledGuidePath() {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'guide', 'GUIDE.md');
+  }
+  return path.join(__dirname, '..', 'GUIDE.md');
 }
 
 // ---------------------------------------------------------------------------
@@ -120,7 +131,11 @@ function showSetupWindow() {
 
     win.setMenuBarVisibility(false);
     win.loadFile(path.join(__dirname, 'setup.html'));
-    win.once('ready-to-show', () => win.show());
+    win.once('ready-to-show', () => {
+      if (!IS_SMOKE_TEST) {
+        win.show();
+      }
+    });
 
     ipcMain.once('setup-save', (_event, token) => {
       saveToken(token.trim());
@@ -140,41 +155,123 @@ function showSetupWindow() {
 // Backend
 // ---------------------------------------------------------------------------
 
-function killOrphanOnPort(port) {
-  // On Windows, use netstat to find and kill any process holding the port
-  // (handles the case where a previous Electron crash left the backend running)
-  return new Promise((resolve) => {
-    const { exec } = require('child_process');
-    exec(`netstat -ano -p TCP | findstr ":${port} "`, (err, stdout) => {
-      if (err || !stdout.trim()) return resolve();
-      const lines = stdout.trim().split('\n');
-      const pids = new Set();
-      for (const line of lines) {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length >= 5) {
-          const state = parts[3];
-          const pid = parseInt(parts[4], 10);
-          if ((state === 'LISTENING' || state === 'ESTABLISHED') && pid && pid !== process.pid) {
-            pids.add(pid);
+function writeBackendPid(pid) {
+  fs.writeFileSync(getBackendPidPath(), String(pid), 'utf8');
+}
+
+function clearBackendPid() {
+  try {
+    fs.unlinkSync(getBackendPidPath());
+  } catch (_) {
+    // Ignore missing files.
+  }
+}
+
+async function terminatePid(pid, signal = 'SIGTERM') {
+  if (!pid || pid === process.pid) return;
+
+  try {
+    process.kill(pid, signal);
+  } catch (error) {
+    if (error.code === 'ESRCH') return;
+    throw error;
+  }
+
+  const deadline = Date.now() + 3000;
+  while (Date.now() < deadline) {
+    try {
+      process.kill(pid, 0);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    } catch (error) {
+      if (error.code === 'ESRCH') return;
+      throw error;
+    }
+  }
+
+  if (process.platform === 'win32') {
+    try {
+      const { execFileSync } = require('child_process');
+      execFileSync('taskkill', ['/PID', String(pid), '/F']);
+      return;
+    } catch (_) {
+      // Fall through to the final kill attempt.
+    }
+  }
+
+  try {
+    process.kill(pid, 'SIGKILL');
+  } catch (error) {
+    if (error.code !== 'ESRCH') throw error;
+  }
+}
+
+async function killRecordedBackend() {
+  const pidPath = getBackendPidPath();
+  if (!fs.existsSync(pidPath)) return;
+
+  const pid = parseInt(fs.readFileSync(pidPath, 'utf8').trim(), 10);
+  clearBackendPid();
+  if (!Number.isInteger(pid) || pid <= 0) return;
+
+  try {
+    await terminatePid(pid);
+  } catch (error) {
+    console.warn(`Failed to terminate recorded backend pid ${pid}:`, error.message);
+  }
+}
+
+function waitForBackendHealth(port, healthToken, timeoutMs = 20000) {
+  const start = Date.now();
+
+  return new Promise((resolve, reject) => {
+    const attempt = () => {
+      const request = http.get(`http://127.0.0.1:${port}/health`, (response) => {
+        let body = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk) => { body += chunk; });
+        response.on('end', () => {
+          if (response.statusCode !== 200) {
+            maybeRetry(new Error(`Unexpected /health status ${response.statusCode}`));
+            return;
           }
-        }
+
+          try {
+            const payload = JSON.parse(body);
+            if (payload.ok && payload.launchToken === healthToken) {
+              resolve();
+              return;
+            }
+            maybeRetry(new Error('Backend health token mismatch'));
+          } catch (error) {
+            maybeRetry(error);
+          }
+        });
+      });
+
+      request.on('error', maybeRetry);
+    };
+
+    const maybeRetry = (error) => {
+      if (Date.now() - start >= timeoutMs) {
+        reject(error instanceof Error ? error : new Error(String(error)));
+        return;
       }
-      if (pids.size === 0) return resolve();
-      let remaining = pids.size;
-      for (const pid of pids) {
-        exec(`taskkill /PID ${pid} /F`, () => { if (--remaining === 0) resolve(); });
-      }
-    });
+      setTimeout(attempt, 250);
+    };
+
+    attempt();
   });
 }
 
 async function spawnBackend() {
   if (backendProcess) return;
-  await killOrphanOnPort(BACKEND_PORT);
+  await killRecordedBackend();
 
   const backendScriptPath = getBackendScriptPath();
   const backendDir = path.dirname(backendScriptPath);
   const desktopEnvPath = ensureDesktopEnvFile();
+  const backendPort = DEFAULT_BACKEND_PORT;
+  const backendHealthToken = crypto.randomBytes(24).toString('hex');
 
   backendProcess = spawn(process.execPath, [backendScriptPath], {
     cwd: backendDir,
@@ -183,13 +280,17 @@ async function spawnBackend() {
       ...process.env,
       ELECTRON_RUN_AS_NODE: '1',
       APP_MODE: 'desktop',
-      PORT: String(BACKEND_PORT),
-      FRONTEND_URL: ELECTRON_RENDERER_URL || `http://localhost:${BACKEND_PORT}`,
+      PORT: String(backendPort),
+      FRONTEND_URL: ELECTRON_RENDERER_URL || `http://localhost:${backendPort}`,
       FRONTEND_DIST: getFrontendDistPath(),
       BACKEND_ENV_PATH: desktopEnvPath,
+      BACKEND_HEALTH_TOKEN: backendHealthToken,
       SESSION_DIR: path.join(app.getPath('userData'), 'sessions'),
     },
   });
+  backendProcess.__quartoReviewPort = backendPort;
+  backendProcess.__quartoReviewHealthToken = backendHealthToken;
+  writeBackendPid(backendProcess.pid);
 
   if (!app.isPackaged) {
     backendProcess.stdout.on('data', (chunk) => process.stdout.write(`[backend] ${chunk}`));
@@ -197,8 +298,10 @@ async function spawnBackend() {
   }
 
   backendProcess.on('exit', (code, signal) => {
+    clearBackendPid();
     backendProcess = null;
     if (quitting) return;
+    process.exitCode = 1;
     dialog.showErrorBox(
       'QuartoReview Backend Stopped',
       `The embedded backend exited unexpectedly (${signal || code || 'unknown'}).`
@@ -211,27 +314,9 @@ function stopBackend() {
   if (!backendProcess) return;
   const child = backendProcess;
   backendProcess = null;
+  clearBackendPid();
   child.kill('SIGTERM');
   setTimeout(() => { if (!child.killed) child.kill('SIGKILL'); }, 3000);
-}
-
-function waitForPort(port, timeoutMs = 20000) {
-  const start = Date.now();
-  return new Promise((resolve, reject) => {
-    const attempt = () => {
-      const socket = net.createConnection({ port, host: '127.0.0.1' });
-      socket.once('connect', () => { socket.end(); resolve(); });
-      socket.once('error', () => {
-        socket.destroy();
-        if (Date.now() - start >= timeoutMs) {
-          reject(new Error(`Timed out waiting for localhost:${port}`));
-          return;
-        }
-        setTimeout(attempt, 250);
-      });
-    };
-    attempt();
-  });
 }
 
 function waitForUrl(urlString, timeoutMs = 20000) {
@@ -291,7 +376,11 @@ function createMainWindow() {
     if (choice === 0) event.preventDefault(); // 0 = "Leave" → allow close
   });
 
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  mainWindow.once('ready-to-show', () => {
+    if (!IS_SMOKE_TEST) {
+      mainWindow.show();
+    }
+  });
   mainWindow.on('closed', () => { mainWindow = null; });
   return mainWindow;
 }
@@ -300,13 +389,20 @@ async function launchApp() {
   // GitHub setup is now optional — available from the in-app menu.
   // The app launches regardless of whether a token has been configured.
   await spawnBackend();
-  await waitForPort(BACKEND_PORT);
+  await waitForBackendHealth(
+    backendProcess.__quartoReviewPort,
+    backendProcess.__quartoReviewHealthToken
+  );
 
-  const startUrl = ELECTRON_RENDERER_URL || `http://localhost:${BACKEND_PORT}`;
+  const startUrl = ELECTRON_RENDERER_URL || `http://localhost:${backendProcess.__quartoReviewPort}`;
   if (ELECTRON_RENDERER_URL) await waitForUrl(ELECTRON_RENDERER_URL);
 
   const window = createMainWindow();
   await window.loadURL(startUrl);
+
+  if (IS_SMOKE_TEST) {
+    setTimeout(() => app.quit(), 1500);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -329,7 +425,7 @@ ipcMain.handle('open-local-file', async () => {
 });
 
 ipcMain.handle('save-local-file', async (_event, content, filePath) => {
-  if (filePath) {
+  if (filePath && !filePath.startsWith('quarto-review://')) {
     fs.writeFileSync(filePath, content, 'utf8');
     return { filePath };
   }
@@ -350,6 +446,18 @@ ipcMain.handle('show-github-setup', async () => {
   await showSetupWindow();
 });
 
+ipcMain.handle('open-startup-guide', async () => {
+  const guidePath = getBundledGuidePath();
+  if (!fs.existsSync(guidePath)) return null;
+
+  return {
+    filePath: 'quarto-review://guide/GUIDE.md',
+    displayName: 'GUIDE.md',
+    content: fs.readFileSync(guidePath, 'utf8'),
+    readOnlySource: true,
+  };
+});
+
 // ---------------------------------------------------------------------------
 // App lifecycle
 // ---------------------------------------------------------------------------
@@ -358,6 +466,7 @@ app.whenReady().then(async () => {
   try {
     await launchApp();
   } catch (error) {
+    process.exitCode = 1;
     dialog.showErrorBox('Failed to Launch QuartoReview', error.message);
     app.quit();
   }

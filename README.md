@@ -1,229 +1,254 @@
-# QuartoReview — macOS Desktop Quarto / R Markdown Editor
+# QuartoReview - Desktop Quarto / R Markdown Editor
 
-QuartoReview is a local macOS desktop app for editing `.qmd` (Quarto Markdown), `.Rmd` (R Markdown), and `.md` (Markdown) files stored on GitHub. The React frontend and Express backend are bundled together inside an Electron shell, so you launch one app instead of managing separate browser and server processes.
-
----
-
-## What it does
-
-- Edit `.qmd`, `.Rmd`, and `.md` files with a rich WYSIWYG interface (headings, bold, italic, tables, math)
-- Run R code chunks directly in the browser using WebAssembly (no local R required)
-- Packages like `tidyverse`, `kableExtra`, and `palmerpenguins` are pre-loaded automatically
-- Load and save files to any GitHub repository you have access to
-- Inline comments, track changes, and citation management
+QuartoReview is a local desktop app for editing `.qmd`, `.Rmd`, and `.md` files. The React frontend and Express backend are bundled inside Electron, so you launch one app instead of managing a browser and a separate server.
 
 ---
 
-## Overview of the setup
+## How to Install
 
-Setting up QuartoReview takes about 10 minutes and has four parts:
+Download the latest release from GitHub:
 
-1. **Install Node.js** — the runtime that powers the app build (one-time)
-2. **Install the app's dependencies** — download the desktop, backend, and frontend packages (one-time)
-3. **Connect GitHub** — use the in-app onboarding flow to authorize QuartoReview with your own GitHub account
-4. **Launch the desktop app** — QuartoReview runs as a standalone macOS application
+- Latest release page: https://github.com/Lakens/QuartoReview/releases/latest
+- Windows direct download: https://github.com/Lakens/QuartoReview/releases/latest/download/QuartoReview-Windows.exe
+- macOS direct download (`.dmg`): https://github.com/Lakens/QuartoReview/releases/latest/download/QuartoReview-macOS.dmg
+- macOS backup download (`.zip`): https://github.com/Lakens/QuartoReview/releases/latest/download/QuartoReview-macOS.zip
+
+These links always point to the newest tagged release.
+
+### Windows install
+
+1. Download `QuartoReview-Windows.exe`.
+2. Double-click the installer.
+3. Windows may warn that the app is from an unknown publisher because the installer is currently **not code-signed**.
+4. If you see a Microsoft Defender SmartScreen warning:
+   - click **More info**
+   - click **Run anyway**
+5. Finish the installer and launch QuartoReview from the Start menu or desktop shortcut.
+
+### macOS install
+
+1. Download `QuartoReview-macOS.dmg`.
+2. Open the `.dmg`.
+3. Drag **QuartoReview** into **Applications**.
+4. Because the app is currently **not code-signed or notarized**, macOS may block the first launch.
+5. Try opening the app once from **Applications**.
+6. If macOS says it cannot be opened:
+   - open **System Settings** -> **Privacy & Security**
+   - scroll to the security section near the bottom
+   - click **Open Anyway** for QuartoReview
+   - confirm by clicking **Open**
+7. After that first approval, the app should launch normally.
+
+### Important note about unsigned apps
+
+QuartoReview releases are currently unsigned on both Windows and macOS. That means:
+
+- Windows may show a SmartScreen warning before first launch.
+- macOS may block the app until you explicitly allow it in **Privacy & Security**.
+
+Only install releases you downloaded from this repository's **Releases** page:
+
+- https://github.com/Lakens/QuartoReview/releases
+
+If you prefer not to trust unsigned binaries, you can build the app from source yourself.
+
+### First launch
+
+On first launch, QuartoReview opens a bundled `GUIDE.md` document inside the editor so new users start with instructions instead of an empty document.
+
+You can then:
+
+- use **Open local file...** from the menu to edit a file on your computer
+- use **Set up GitHub access** to work directly with GitHub repositories
 
 ---
 
-## Step 1 — Install Node.js
+## What It Does
 
-Download and install Node.js **version 18 or later** from https://nodejs.org
-Choose the **LTS** version. Accept all defaults during installation.
-
-> **Already have Node.js?** Check your version by running `node --version` in a terminal. If it says v18 or higher, you're good.
-
----
-
-## Step 2 — Get the code and install dependencies
-
-**Get the code:**
-
-- **Option A — Download ZIP** (easiest): Go to https://github.com/Lakens/QuartoReview, click the green **"Code"** button → **"Download ZIP"**, then extract it somewhere on your computer (Desktop or Documents is fine).
-- **Option B — Clone with git**: `git clone https://github.com/Lakens/QuartoReview.git`
-
-**Install dependencies** (one-time setup):
-
-| Platform | How |
-|----------|-----|
-| Mac | Open Terminal, type `chmod +x install.sh && ./install.sh`, press Enter |
-
-The script checks that Node.js is installed and downloads the desktop, backend, and frontend dependencies. It takes a few minutes and tells you when it's done.
+- Edit `.qmd`, `.Rmd`, and `.md` files with a rich WYSIWYG interface
+- Run R code chunks directly in the browser using WebAssembly
+- Auto-install R packages referenced in the document
+- Load and save files from GitHub repositories
+- Add comments, track changes, citations, preview, and diffs
 
 ---
 
-## Step 3 — Connect GitHub
+## GitHub Setup
 
-On first launch, QuartoReview opens an in-app GitHub setup dialog automatically if the app has not been configured yet.
+GitHub mode is optional. Local file mode works without any account.
 
-You can connect GitHub in two ways:
+On first use of GitHub mode:
 
-### Option A — Personal access token (fastest for a local install)
+1. Open the app menu.
+2. Choose **Set up GitHub access**.
+3. Choose either:
+   - **Personal token**
+   - **GitHub OAuth app**
+
+### Option A - Personal access token
 
 This is the simplest route for a single-user desktop install.
 
-1. In QuartoReview, click **"Connect GitHub"**
-2. Choose **"Personal token"**
-3. Click **"Open GitHub token page"**
-4. Create a token with repository access on your own GitHub account
-5. Paste the token into QuartoReview
-6. Click **"Save token and sign in"**
+1. In QuartoReview, choose **Personal token**
+2. Click **Open GitHub token page**
+3. Create a token with repository access
+4. Paste it into QuartoReview
+5. Save
 
-QuartoReview validates the token and stores it locally on that Mac.
+### Option B - GitHub OAuth app
 
-### Option B — GitHub OAuth App (keeps the explicit authorization flow)
+Use this if you want the explicit GitHub authorization flow.
 
-Use this if you want GitHub to show an explicit app authorization screen when signing in.
+1. In QuartoReview, choose **GitHub OAuth app**
+2. Create a GitHub OAuth app with:
 
-1. In QuartoReview, click **"Connect GitHub"**
-2. Choose **"GitHub OAuth app"**
-3. Click **"Open GitHub OAuth settings"**
-4. Create a GitHub OAuth app on your own GitHub account with these values:
+| Field | Value |
+|-------|-------|
+| Application name | `QuartoReview` |
+| Homepage URL | `http://localhost:3001` |
+| Authorization callback URL | `http://localhost:3001/api/auth/callback` |
 
-   | Field | Value |
-   |-------|-------|
-   | Application name | `QuartoReview` (or anything you like) |
-   | Homepage URL | `http://localhost:3001` |
-   | Authorization callback URL | `http://localhost:3001/api/auth/callback` |
+3. Paste the client ID and client secret into QuartoReview
+4. Continue to GitHub
 
-5. Copy the **Client ID** and **Client Secret** into the QuartoReview setup dialog
-6. Leave the default redirect URI as `http://localhost:3001/api/auth/callback`
-7. Click **"Save and continue to GitHub"**
+Desktop configuration is stored locally in:
 
-GitHub will then show the standard authorization page for your OAuth app, and you sign in with your own GitHub account.
-
-### Advanced option — edit the local config file manually
-
-If needed, QuartoReview stores its local desktop configuration here:
-
-`~/Library/Application Support/QuartoReview/.env`
-
-Most users should not need to edit this file directly, because the app now manages it through the GUI onboarding flow.
+- macOS: `~/Library/Application Support/QuartoReview/.env`
+- Windows: `%APPDATA%\QuartoReview\.env`
 
 ---
 
-## Step 4 — Launch the desktop app
+## Running R Code
 
-Run:
+R runs entirely in your browser - no local R installation is required.
+
+When you open a `.qmd`, `.Rmd`, or `.md` file, QuartoReview automatically:
+
+1. scans the document for `library()` and `require()` calls
+2. installs those packages in the in-browser R environment
+3. loads each package
+4. scans for file-reading calls like `read_csv()`, `read_excel()`, `load()`, and `source()`
+5. fetches referenced data files from GitHub into WebR's virtual filesystem
+
+A blue banner shows progress while packages and data files are loading.
+
+---
+
+## Troubleshooting
+
+**Windows says the app is unsafe**
+-> This is expected for an unsigned app. Use **More info** -> **Run anyway** only if you downloaded it from this repository's Releases page.
+
+**macOS says the app cannot be opened**
+-> Open **System Settings** -> **Privacy & Security** and click **Open Anyway** for QuartoReview.
+
+**The app opens but I cannot see repositories**
+-> Complete the in-app GitHub setup flow successfully first. Repositories only appear after authentication.
+
+**R code gives "there is no package called ..."**
+-> Wait for the package-install banner to finish before running code.
+
+**R code gives "cannot open file ...: No such file or directory"**
+-> Check that the file exists in the repository and that the path in your code is correct relative to the document.
+
+**Port 3001 is already in use**
+-> Restart QuartoReview. Recent versions now clean up old embedded backend processes more reliably after crashes.
+
+> Need help? Submit issues at [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview).
+
+---
+
+## Building From Source
+
+If you want to build the app yourself:
+
+1. Install Node.js 18 or later from https://nodejs.org
+2. Clone the repository:
 
 ```bash
-chmod +x start.sh
-./start.sh
+git clone https://github.com/Lakens/QuartoReview.git
+cd QuartoReview
 ```
 
-This builds the frontend, starts the embedded backend, and opens the Electron desktop app.
+3. Install dependencies:
 
-**First launch behavior:**
+```bash
+npm run install:all
+```
 
-1. QuartoReview opens
-2. If GitHub has not been configured yet, the app shows the setup dialog automatically
-3. Choose either **"Personal token"** or **"GitHub OAuth app"**
-4. Complete the setup flow and continue into the editor
+4. Launch in desktop mode:
 
-To build a distributable macOS app bundle and disk image, run:
+```bash
+npm start
+```
+
+5. Build installers:
+
+```bash
+build_win.bat
+```
 
 ```bash
 chmod +x build_mac.sh
 ./build_mac.sh
 ```
 
-The generated installer artifacts go into `dist/`.
+Generated installers go into `dist/`.
 
-`dist/` is intentionally ignored by git because it contains generated build output, large platform-specific binaries, and packaging metadata that can be recreated from source. If you want to share the desktop app, the cleaner approach is to upload the built installer from `dist/` to a GitHub Release, cloud storage, or a shared drive instead of committing `dist/` into the repository history.
-
-A GitHub Actions workflow is included at `.github/workflows/build-desktop.yml`. It builds Windows and macOS installers automatically when app-relevant files change in `backend/`, `frontend/`, `electron/`, or the build scripts, and it ignores documentation-only changes such as `README.md`.
+`dist/` is intentionally ignored by git because it contains generated build output and platform-specific binaries. Share releases through GitHub Releases instead of committing `dist/`.
 
 ---
 
-## Running R code
+## CI and Releases
 
-R runs entirely in your browser — no local R installation needed.
-
-When you open a `.qmd`, `.Rmd`, or `.md` file, the app automatically:
-
-1. Scans the document for `library()` and `require()` calls and installs those packages into the in-browser R environment
-2. Loads each installed package into the R session so it is immediately available
-3. Scans R chunks for file-reading calls (`read_csv()`, `read_excel()`, `load()`, `source()`, etc.) and fetches the referenced data files from your GitHub repository into WebR's virtual filesystem
-
-A blue banner shows progress for each step. **Package installation takes a few minutes on first use** — R code will not run until the banner disappears. Data files are fetched in the background after packages are ready.
-
-Once ready:
-
-- Click the **R** toolbar button to insert a new code chunk
-- Type R code in the chunk
-- Click the **Run** button (▶) on the chunk
-- Output (text, tables, plots) appears below the chunk
+- `.github/workflows/build-desktop.yml` builds Windows and macOS apps when app-relevant files change
+- `.github/workflows/release-desktop.yml` builds and publishes tagged releases such as `v1.0.1`
+- Releases attach stable download assets:
+  - `QuartoReview-Windows.exe`
+  - `QuartoReview-macOS.dmg`
+  - `QuartoReview-macOS.zip`
 
 ---
 
-## Troubleshooting
+## Project Structure
 
-**The GitHub setup dialog appears, but sign-in still fails**
-→ If you used a personal access token, make sure the token has repository access. If you used OAuth, make sure the client ID, client secret, and redirect URI match your GitHub OAuth app exactly.
-
-**The app opens but I can't see any repositories**
-→ Make sure you completed the in-app GitHub setup flow successfully. Repositories only appear after authentication. If you just created a GitHub account, create at least one repository on GitHub first.
-
-> **Need help?** Submit issues at [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview).
-
-**R code gives "there is no package called …"**
-→ Wait for the blue "Installing R packages…" banner to disappear before running code. If the banner is gone and the error persists, reload the page.
-
-**R code gives "cannot open file '…': No such file or directory"**
-→ The data file could not be fetched from your repository. Check that the path in your R code is correct relative to the document and that the file exists in the repository. Files larger than 5 MB cannot be loaded. If the path is constructed dynamically (e.g. `paste0(dir, file)`) it cannot be detected automatically — rename it to a literal string instead.
-
-**R chunks show "Starting R…" and never finish**
-→ Wait up to 60 seconds on first use. If it still hangs, open the browser DevTools (F12 → Console) and look for `[WebR]` log lines.
-
-**Port 3001 is already in use**
-→ Quit the conflicting process or restart QuartoReview after freeing port 3001.
-
----
-
-## Project structure
-
-```
+```text
 QuartoReview/
-├── electron/             # Electron main/preload process
-├── backend/              # Express.js API server (embedded in the desktop app)
-│   ├── api/              # API routes (auth, files, bibliography, etc.)
-│   ├── middleware/        # Security middleware
-│   └── .env.example      # Desktop configuration template
-├── frontend/             # React + Vite app
-│   ├── src/
-│   │   ├── cells/        # Code cell, markdown cell, raw cell
-│   │   ├── components/   # Editor, toolbar, comments, citations
-│   │   └── utils/        # API helpers, GitHub utils, WebR singleton
-│   └── public/           # Static files (WebR worker scripts)
-├── install.sh            # Install all desktop dependencies
-├── start.sh              # Build and launch the desktop app
-└── README.md
+|- electron/             # Electron main/preload process
+|- backend/              # Express API server embedded in the desktop app
+|- frontend/             # React + Vite app
+|- GUIDE.md              # In-app startup guide
+|- build_win.bat
+|- build_mac.bat
+|- build_mac.sh
+|- README.md
 ```
 
 ---
 
 ## License
 
-Elastic License v2 (ELv2) — see [LICENSE.md](LICENSE.md).
+Elastic License v2 (ELv2) - see [LICENSE.md](LICENSE.md).
 
 ---
 
-## Built on Resolve
+## Built On Resolve
 
-QuartoReview is a fork of [Resolve](https://github.com/MichelNivard/resolve) by Michel Nivard. The original Resolve provided the foundational architecture on which this project is built: the TipTap/ProseMirror editor core, GitHub OAuth authentication, `.ipynb` loading and saving, the Track Changes extension, the comment mark system, the basic citation mark, raw and code cell architecture, inline math rendering, and the comments sidebar and share modal.
+QuartoReview is a fork of [Resolve](https://github.com/MichelNivard/resolve) by Michel Nivard. The original Resolve provided the foundational architecture on which this project is built.
 
-The following features were added in this fork by Daniel Lakens:
+Major additions in this fork include:
 
-- **QMD/Rmd/Md format support** — `.qmd` (Quarto Markdown), `.Rmd` (R Markdown), and `.md` (Markdown) as supported file formats, including full round-trip conversion between these formats and the TipTap document model; chunk options (e.g. `echo=FALSE`, named chunks) are preserved exactly without modification
-- **Vite migration** — migrated the frontend from Create React App to Vite
-- **Live preview pane** — side-by-side rendered prose preview
-- **WebR in-browser R execution** — run R code chunks directly in the browser via WebAssembly; packages referenced by `library()`/`require()` in the document are automatically installed and loaded when the file opens; R plots and tables are rendered inline; a per-chunk warning is shown when a required package is unavailable for WebAssembly
-- **GitHub data file sync** — data files referenced by `read_csv()`, `read_excel()`, `load()`, `source()`, and other file-reading functions are automatically fetched from the GitHub repository and written into WebR's virtual filesystem, so relative paths in R code work without any modification; R's working directory is set to match the QMD file's location in the repository
-- **Zotero citation picker** — integration with Zotero's Better BibTeX "Cite as You Write" API, with APA in-text and reference list formatting
-- **LanguageTool grammar and spell checking** — real-time grammar and spelling feedback via LanguageTool, with inline highlighting and one-click corrections
-- **Diff viewer** — compare any saved version against the current document ("Changes since this version") or view what changed within a specific commit ("Changes in this version"), with word-level highlighting
-- **Dark mode** — full dark theme with CSS variable overrides, toggled from the header
-- **Word count and unsaved-words nudge** — live word count in the status bar, with a header warning after 50 unsaved words
-- **Commit message dialog** — descriptive commit messages when saving to GitHub
-- **UI redesign** — unified header row with file controls, track changes toggle, share button, and dark mode toggle; orange pill-style toolbar buttons for R chunk insertion, citation, and diff
+- `.qmd`, `.Rmd`, and `.md` support
+- Vite migration
+- live preview pane
+- WebR in-browser R execution
+- GitHub data file sync for R workflows
+- Zotero citation picker
+- LanguageTool grammar and spell checking
+- diff viewer
+- dark mode
+- word count and unsaved-words warning
+- commit message dialog
+- desktop packaging for Windows and macOS
 
 Issues and contributions: [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview)

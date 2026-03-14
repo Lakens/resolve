@@ -2,7 +2,17 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaSun, FaMoon, FaEdit, FaShare, FaBars } from 'react-icons/fa';
 import ShareModal from '../Share/ShareModal';
 import { useAuth } from '../../contexts/AuthContext';
-import { subscribePackageStatus, subscribeFileStatus, installPackagesForQmd, syncFilesForQmd, evaluateInlineExpressions, getInlineRCache } from '../../utils/webRSingleton';
+import {
+  subscribePackageStatus,
+  subscribeFileStatus,
+  installPackagesForQmd,
+  syncFilesForQmd,
+  evaluateInlineExpressions,
+  getInlineRCache,
+  resetPackageStatus,
+  resetFileStatus,
+  setFileStatusError,
+} from '../../utils/webRSingleton';
 import { fetchNotebooksInRepo, fetchRawFile } from '../../utils/api';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -332,6 +342,8 @@ const EditorWrapper = ({
 
   useEffect(() => {
     if (editor && qmdContent) {
+      let cancelled = false;
+
       requestAnimationFrame(() => {
         try {
           qmdToTiptapDoc(qmdContent, editor);
@@ -342,15 +354,37 @@ const EditorWrapper = ({
       // Reset any previously dismissed banners for the new file
       setPkgBannerDismissed(false);
       setFileBannerDismissed(false);
-      // Install + load packages, then sync data files into WebR's virtual FS.
-      // Run sequentially: package installation uses evalRVoid internally, so
-      // completing it first avoids concurrent R evaluations.
       const repo = selectedRepo ? `${selectedRepo.owner.login}/${selectedRepo.name}` : null;
-      installPackagesForQmd(qmdContent).then(() => {
-        syncFilesForQmd(qmdContent, filePath, repo, fetchRawFile);
-      });
+
+      const loadQmdDependencies = async () => {
+        resetPackageStatus();
+        resetFileStatus();
+
+        try {
+          await installPackagesForQmd(qmdContent);
+        } catch (err) {
+          if (!cancelled) {
+            setError(`R package setup failed: ${err.message}`);
+          }
+        }
+
+        try {
+          await syncFilesForQmd(qmdContent, filePath, repo, fetchRawFile);
+        } catch (err) {
+          setFileStatusError(err.message || 'Data file sync failed');
+          if (!cancelled) {
+            setError(`Data file sync failed: ${err.message}`);
+          }
+        }
+      };
+
+      loadQmdDependencies();
+
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [editor, qmdContent]);
+  }, [editor, qmdContent, selectedRepo, filePath]);
 
   // After content loads, reset the save baseline so newly-loaded words don't
   // count as unsaved. Double rAF: first rAF is when the content conversion runs;
@@ -382,6 +416,12 @@ const EditorWrapper = ({
   if (!editor) {
     return <div>Loading editor...</div>;
   }
+
+  const layoutMode = showDiff ? 'diff' : (showPreview ? 'preview' : 'editor');
+  const editorPaneClassName = `editor-container editor-container--${layoutMode}${showSource ? ' editor-container--source' : ''}`;
+  const editorMainClassName = `editor-main${showSource ? ' editor-main--source' : ''}`;
+  const editorContentClassName = `editor-content-container${showSource ? ' editor-content-container--source' : ''}`;
+  const workspaceClassName = `editor-with-sidebar editor-with-sidebar--${layoutMode}`;
 
   return (
     <div className="app-container">
@@ -429,6 +469,12 @@ const EditorWrapper = ({
               <button className="pkg-install-banner__close" onClick={() => setFileBannerDismissed(true)} title="Dismiss">✕</button>
             </div>
           )
+        )}
+        {fileStatus.phase === 'error' && !fileBannerDismissed && (
+          <div className="pkg-install-banner pkg-install-banner--error">
+            {fileStatus.skipped[0] || 'Data file sync failed.'}
+            <button className="pkg-install-banner__close" onClick={() => setFileBannerDismissed(true)} title="Dismiss">✕</button>
+          </div>
         )}
       </div>
       <header className="app-header">
@@ -583,11 +629,11 @@ const EditorWrapper = ({
           </div>
         ) : (
           <div className="content-container">
-            <div className="editor-with-sidebar">
-              <div className="editor-container">
+            <div className={workspaceClassName}>
+              <div className={editorPaneClassName}>
                 {editor?.isEditable && editor?.view && <EditorBubbleMenuManager editor={editor} />}
-                <div className="editor-main">
-                  <div className="editor-content-container">
+                <div className={editorMainClassName}>
+                  <div className={editorContentClassName}>
                     {showSource && (
                       <textarea
                         className="source-editor"

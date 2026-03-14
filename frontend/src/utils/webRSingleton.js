@@ -42,6 +42,10 @@ export function getPackageStatus() {
   return _packageStatus;
 }
 
+export function resetPackageStatus() {
+  _setPackageStatus({ phase: 'idle', current: null, index: 0, total: 0, errors: [] });
+}
+
 // ── File-sync status / subscriber system ─────────────────────────────────────
 // fileStatus shape: { phase: 'idle'|'syncing'|'done'|'error',
 //                     current: string|null, synced: number, total: number,
@@ -59,6 +63,24 @@ export function subscribeFileStatus(fn) {
   _fileSubscribers.add(fn);
   fn(_fileStatus);
   return () => _fileSubscribers.delete(fn);
+}
+
+export function getFileStatus() {
+  return _fileStatus;
+}
+
+export function resetFileStatus() {
+  _setFileStatus({ phase: 'idle', current: null, synced: 0, total: 0, skipped: [] });
+}
+
+export function setFileStatusError(message) {
+  _setFileStatus({
+    phase: 'error',
+    current: null,
+    synced: 0,
+    total: 0,
+    skipped: message ? [message] : [],
+  });
 }
 
 // ── QMD package extraction ────────────────────────────────────────────────────

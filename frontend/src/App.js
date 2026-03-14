@@ -51,6 +51,29 @@ function App() {
   const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
   const [commentMarkKey, setCommentMarkKey] = useState(0);
   const isLoadingFile = useRef(false);
+  const hasLoadedStartupGuide = useRef(false);
+
+  useEffect(() => {
+    const loadStartupGuide = async () => {
+      if (hasLoadedStartupGuide.current) return;
+      if (owner || repo) return;
+      if (!window.quartoReviewDesktop?.openStartupGuide) return;
+      if (localFilePath || qmdContent || ipynb) return;
+
+      const result = await window.quartoReviewDesktop.openStartupGuide();
+      if (!result) return;
+
+      hasLoadedStartupGuide.current = true;
+      setLocalFilePath(result.filePath || result.displayName || 'GUIDE.md');
+      setQmdContent(result.content);
+      setIpynb(null);
+      setSelectedRepo(null);
+    };
+
+    loadStartupGuide().catch((error) => {
+      console.error('Error loading startup guide:', error);
+    });
+  }, [owner, repo, localFilePath, qmdContent, ipynb]);
 
   useEffect(() => {
     const loadRepositories = async () => {

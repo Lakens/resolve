@@ -11,6 +11,7 @@ import { createRateLimiter, secureCookies } from './middleware/security.js';
 import {
   allowedOrigins,
   backendEnvPath,
+  backendHealthToken,
   getFrontendDistDir,
   getWebRDistDir,
   isDesktopMode,
@@ -193,6 +194,14 @@ protectedRoutes.forEach(route => {
 });
 
 // Routes
+app.get('/health', (_req, res) => {
+  res.json({
+    ok: true,
+    desktopMode: isDesktopMode,
+    launchToken: backendHealthToken || null,
+  });
+});
+
 app.use('/api/auth', authRoute.default);
 app.use('/api/user', userRoute.default);
 app.use('/api/fetchFile', fetchFileRoute.default);
@@ -230,4 +239,9 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Backend running`));
+const server = app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+
+server.on('error', (error) => {
+  console.error('Backend server failed to start:', error);
+  process.exit(1);
+});

@@ -25,6 +25,10 @@
     "icon": "icon.ico",
     "extraResources": [
       {
+        "from": "../GUIDE.md",
+        "to": "guide/GUIDE.md"
+      },
+      {
         "from": "../backend",
         "to": "backend",
         "filter": [

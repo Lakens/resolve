@@ -1,35 +1,16 @@
-name: Build Desktop Apps
+name: Release Desktop Apps
 
 on:
   push:
-    branches:
-      - main
-      - master
-    paths:
-      - 'backend/**'
-      - 'electron/**'
-      - 'frontend/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'build_win.bat'
-      - 'build_mac.bat'
-      - 'build_mac.sh'
-      - 'install.bat'
-      - 'install.sh'
-      - 'scripts/**'
-      - 'start.bat'
-      - 'start.sh'
-      - '.gitattributes'
-      - '.github/workflows/build-desktop.yml'
-  workflow_dispatch:
+    tags:
+      - 'v*'
 
-concurrency:
-  group: desktop-build-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: write
 
 jobs:
   build-windows:
-    name: Build Windows
+    name: Release Windows Build
     runs-on: windows-latest
 
     steps:
@@ -72,17 +53,25 @@ jobs:
       - name: Smoke test packaged Windows app
         run: node scripts/electron-smoke.mjs "dist/win-unpacked/QuartoReview.exe"
 
-      - name: Upload Windows artifacts
+      - name: Prepare Windows release assets
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          $installer = Get-ChildItem dist -Filter *.exe | Select-Object -First 1
+          if (-not $installer) { throw "Windows installer not found." }
+          Copy-Item $installer.FullName release-assets/QuartoReview-Windows.exe
+          $blockmap = Get-ChildItem dist -Filter *.blockmap | Select-Object -First 1
+          if ($blockmap) { Copy-Item $blockmap.FullName release-assets/QuartoReview-Windows.exe.blockmap }
+
+      - name: Upload Windows release assets
         uses: actions/upload-artifact@v4
         with:
-          name: quarto-review-windows-${{ github.sha }}
-          path: |
-            dist/*.exe
-            dist/*.blockmap
+          name: release-windows
+          path: release-assets/*
           if-no-files-found: error
 
   build-macos:
-    name: Build macOS
+    name: Release macOS Build
     runs-on: macos-latest
 
     steps:
@@ -129,11 +118,48 @@ jobs:
           test -n "$APP_PATH"
           node scripts/electron-smoke.mjs "$APP_PATH"
 
-      - name: Upload macOS artifacts
+      - name: Prepare macOS release assets
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          dmg="$(find dist -maxdepth 1 -name '*.dmg' | head -n 1)"
+          zip="$(find dist -maxdepth 1 -name '*.zip' | head -n 1)"
+          test -n "$dmg"
+          test -n "$zip"
+          cp "$dmg" release-assets/QuartoReview-macOS.dmg
+          cp "$zip" release-assets/QuartoReview-macOS.zip
+
+      - name: Upload macOS release assets
         uses: actions/upload-artifact@v4
         with:
-          name: quarto-review-macos-${{ github.sha }}
-          path: |
-            dist/*.dmg
-            dist/*.zip
+          name: release-macos
+          path: release-assets/*
           if-no-files-found: error
+
+  publish-release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs:
+      - build-windows
+      - build-macos
+
+    steps:
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-windows
+          path: release-assets/windows
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-macos
+          path: release-assets/macos
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/windows/*
+            release-assets/macos/*
+          generate_release_notes: true

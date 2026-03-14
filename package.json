@@ -12,6 +12,9 @@
     "dev:frontend": "npm start --prefix frontend",
     "dev": "concurrently -k \"npm run dev:frontend\" \"cross-env ELECTRON_RENDERER_URL=http://localhost:5173 electron .\"",
     "build:frontend": "npm run build --prefix frontend",
+    "test:frontend": "npm test --prefix frontend",
+    "test:backend": "npm test --prefix backend",
+    "smoke:electron": "node scripts/electron-smoke.mjs",
     "start": "npm run build:frontend && electron .",
     "dist": "npm run build:frontend && electron-builder --mac",
     "dist:dir": "npm run build:frontend && electron-builder --mac dir"
