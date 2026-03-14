@@ -1,14 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
   FaBold, FaItalic, FaUnderline, FaStrikethrough,
-  FaListUl, FaListOl, FaQuoteRight, FaCode,
-  FaPalette, FaFill, FaComment, FaUndo, FaRedo,
-  FaTextHeight, FaHighlighter, FaImage,
+  FaListUl, FaListOl, FaUndo, FaRedo,
+  FaHighlighter, FaImage, FaLink,
   FaTable, FaBookOpen
 } from 'react-icons/fa';
 import { BiCodeBlock } from 'react-icons/bi';
-import { MdFormatClear } from 'react-icons/md';
-import { RiDoubleQuotesL } from 'react-icons/ri';
 import { AiOutlineSplitCells, AiOutlineInsertRowBelow } from 'react-icons/ai';
 import { BsTable } from 'react-icons/bs';
 import '../../styles/components/editor/_toolbar.css';
@@ -26,7 +23,9 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
   const [commentText, setCommentText] = useState('');
   const [isZoteroPicking, setIsZoteroPicking] = useState(false);
   const [showTableMenu, setShowTableMenu] = useState(false);
+  const [showFormatMenu, setShowFormatMenu] = useState(false);
   const [tableMenuPos, setTableMenuPos] = useState({ top: 0, left: 0 });
+  const [formatMenuPos, setFormatMenuPos] = useState({ top: 0, left: 0 });
 
   const headingMenuRef = useRef(null);
   const textColorMenuRef = useRef(null);
@@ -34,6 +33,8 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
   const fontFamilyMenuRef = useRef(null);
   const tableMenuRef = useRef(null);
   const tableButtonRef = useRef(null);
+  const formatMenuRef = useRef(null);
+  const formatButtonRef = useRef(null);
 
   const { user } = useAuth();
 
@@ -55,12 +56,15 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
       if (showTableMenu && tableMenuRef.current && !tableMenuRef.current.contains(e.target)) {
         setShowTableMenu(false);
       }
+      if (showFormatMenu && formatMenuRef.current && !formatMenuRef.current.contains(e.target)) {
+        setShowFormatMenu(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showHeadingMenu, showTextColorMenu, showBgColorMenu, showFontFamilyMenu, showTableMenu]);
+  }, [showHeadingMenu, showTextColorMenu, showBgColorMenu, showFontFamilyMenu, showTableMenu, showFormatMenu]);
 
   if (!editor) return null;
 
@@ -85,6 +89,28 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }
+  };
+
+  const handleInsertLink = () => {
+    const { from, to } = editor.state.selection;
+    const hasSelection = from !== to;
+    const selectedText = hasSelection ? editor.state.doc.textBetween(from, to, ' ') : '';
+    const url = window.prompt('Enter link URL:', 'https://');
+    if (!url) return;
+
+    if (hasSelection) {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+      return;
+    }
+
+    const linkText = window.prompt('Enter link text:', 'Link text');
+    if (!linkText) return;
+
+    editor.chain().focus().insertContent({
+      type: 'text',
+      text: linkText,
+      marks: [{ type: 'link', attrs: { href: url } }],
+    }).run();
   };
 
   // Insert a new empty R code chunk at the cursor
@@ -118,6 +144,18 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
   const handleToggleHeaderColumn = () => editor.chain().focus().toggleHeaderColumn().run();
   const handleToggleHeaderRow = () => editor.chain().focus().toggleHeaderRow().run();
   const handleToggleHeaderCell = () => editor.chain().focus().toggleHeaderCell().run();
+
+  const formatMenuActions = [
+    { icon: <FaBold />, label: 'Bold', action: handleBold },
+    { icon: <FaItalic />, label: 'Italic', action: handleItalic },
+    { icon: <FaUnderline />, label: 'Underline', action: handleUnderline },
+    { icon: <FaStrikethrough />, label: 'Strikethrough', action: handleStrikethrough },
+    { icon: <FaHighlighter />, label: 'Highlight', action: handleHighlight },
+    { icon: <FaImage />, label: 'Insert image', action: handleInsertImage },
+    { icon: <FaListUl />, label: 'Bulleted list', action: handleBulletList },
+    { icon: <FaListOl />, label: 'Numbered list', action: handleOrderedList },
+    { icon: <FaLink />, label: 'Insert link', action: handleInsertLink },
+  ];
 
   const handleToggleComments = () => {
     if (onToggleComments) onToggleComments();
@@ -324,19 +362,38 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
 
         <div className="tb-sep" />
 
-        {/* Formatting */}
-        <button className="toolbar-btn" onClick={handleBold} title="Bold"><FaBold /></button>
-        <button className="toolbar-btn" onClick={handleItalic} title="Italic"><FaItalic /></button>
-        <button className="toolbar-btn" onClick={handleUnderline} title="Underline"><FaUnderline /></button>
-        <button className="toolbar-btn" onClick={handleStrikethrough} title="Strikethrough"><FaStrikethrough /></button>
-        <button className="toolbar-btn" onClick={handleHighlight} title="Highlight"><FaHighlighter /></button>
-
-        <div className="tb-sep" />
-
-        {/* Image + Lists */}
-        <button className="toolbar-btn" onClick={handleInsertImage} title="Insert Image"><FaImage /></button>
-        <button className="toolbar-btn" onClick={handleBulletList} title="Bulleted List"><FaListUl /></button>
-        <button className="toolbar-btn" onClick={handleOrderedList} title="Numbered List"><FaListOl /></button>
+        {/* Formatting dropdown */}
+        <div className="tb-table-wrap" ref={formatMenuRef}>
+          <button
+            ref={formatButtonRef}
+            className={`toolbar-btn${showFormatMenu ? ' is-active' : ''}`}
+            onClick={() => {
+              if (formatButtonRef.current) {
+                const r = formatButtonRef.current.getBoundingClientRect();
+                setFormatMenuPos({ top: r.bottom + 4, left: r.left });
+              }
+              setShowFormatMenu(v => !v);
+            }}
+            title="Formatting"
+          >
+            <FaBold /><span>Format</span>
+          </button>
+          {showFormatMenu && (
+            <div className="tb-table-menu" style={{ top: formatMenuPos.top, left: formatMenuPos.left }}>
+              {formatMenuActions.map(({ icon, label, action }) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    action();
+                    setShowFormatMenu(false);
+                  }}
+                >
+                  {icon} {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="tb-sep" />
 

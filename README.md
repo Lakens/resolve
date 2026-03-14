@@ -71,6 +71,7 @@ From the app menu you can:
 - Auto-install R packages referenced in the document
 - Load and save files from GitHub repositories
 - Add comments, track changes, citations, preview, and diffs
+- Add citations from Zotero or by DOI, then save them to `references.bib`
 
 ---
 
@@ -132,6 +133,19 @@ When you open a `.qmd`, `.Rmd`, or `.md` file, QuartoReview automatically:
 5. fetches referenced data files from GitHub into WebR's virtual filesystem
 
 A blue banner shows progress while packages and data files are loading.
+
+---
+
+## References
+
+QuartoReview supports two citation workflows for GitHub-backed documents:
+
+1. Use the `Cite` button in the toolbar to pick a reference from Zotero with Better BibTeX.
+2. Select text in the editor, then use the citation bubble to enter a DOI such as `10.1037/xlm0001204`.
+
+Both methods insert a citation into the document and save the reference into `references.bib`, typically next to the document in the repository.
+
+In local-file mode, bibliography support is more limited and there is not yet the same managed `references.bib` save flow.
 
 ---
 
@@ -245,6 +259,7 @@ Major additions in this fork include:
 - WebR in-browser R execution
 - GitHub data file sync for R workflows
 - Zotero citation picker
+- DOI-based citation insertion
 - LanguageTool grammar and spell checking
 - diff viewer
 - dark mode

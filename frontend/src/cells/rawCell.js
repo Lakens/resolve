@@ -31,6 +31,19 @@ function tryParseYaml(content) {
   return null;
 }
 
+function formatYamlFragment(value) {
+  return yaml.dump(value, {
+    lineWidth: -1,
+    noRefs: true,
+    indent: 2,
+    flowLevel: -1
+  }).trim();
+}
+
+function isStructuredValue(value) {
+  return Array.isArray(value) || (typeof value === 'object' && value !== null);
+}
+
 export const RawCell = Node.create({
     name: 'rawCell',
     group: 'block',
@@ -118,6 +131,10 @@ export const RawCell = Node.create({
               const row = document.createElement('div');
               row.classList.add('property-row', `property-row--${key.toLowerCase()}`);
               row.setAttribute('data-property', key);
+              const structuredValue = isStructuredValue(value);
+              if (structuredValue) {
+                row.classList.add('property-row--structured');
+              }
 
               const labelDiv = document.createElement('div');
               labelDiv.classList.add('property-label');
@@ -127,10 +144,16 @@ export const RawCell = Node.create({
               valueDiv.classList.add('property-value');
 
               let input;
-              if (key === 'abstract' || (value && value.length > 100)) {
+              if (
+                key === 'title' ||
+                key === 'subtitle' ||
+                key === 'abstract' ||
+                structuredValue ||
+                (typeof value === 'string' && value.length > 100)
+              ) {
                 input = document.createElement('textarea');
-                input.rows = '4';
-                input.spellcheck = true;
+                input.rows = key === 'abstract' ? '4' : '1';
+                input.spellcheck = key !== 'author' && key !== 'affiliations';
               } else {
                 input = document.createElement('input');
                 input.type = 'text';
@@ -164,18 +187,7 @@ export const RawCell = Node.create({
               };
 
               const updateYamlNode = (newYaml) => {
-                const formattedYaml = Object.entries(newYaml)
-                  .map(([k, v]) => {
-                    if (typeof v === 'object' && v !== null) {
-                      const nested = Object.entries(v)
-                        .map(([sk, sv]) => `  ${sk}: ${JSON.stringify(sv)}`)
-                        .join('\n');
-                      return `${k}:\n${nested}`;
-                    }
-                    return `${k}: ${typeof v === 'string' ? JSON.stringify(v) : v}`;
-                  })
-                  .join('\n');
-
+                const formattedYaml = formatYamlFragment(newYaml);
                 const yamlContent = `---\n${formattedYaml}\n---`;
                 const pos = getPos();
                 if (typeof pos !== 'number') return;
@@ -199,11 +211,38 @@ export const RawCell = Node.create({
                   input.style.height = input.scrollHeight + 'px';
                 };
 
-                input.addEventListener('input', (e) => {
-                  const newYaml = { ...yaml, [key]: e.target.value };
-                  adjustHeight();
-                  updateYamlNode(newYaml);
-                });
+                if (structuredValue) {
+                  const commitStructuredValue = () => {
+                    try {
+                      const parsedValue = yaml.load(input.value) ?? '';
+                      const newYaml = { ...yaml, [key]: parsedValue };
+                      input.classList.remove('property-input--invalid');
+                      updateYamlNode(newYaml);
+                    } catch (error) {
+                      input.classList.add('property-input--invalid');
+                    }
+                  };
+
+                  input.addEventListener('input', () => {
+                    adjustHeight();
+                    input.classList.remove('property-input--invalid');
+                  });
+
+                  input.addEventListener('blur', commitStructuredValue);
+
+                  input.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                      e.preventDefault();
+                      commitStructuredValue();
+                    }
+                  });
+                } else {
+                  input.addEventListener('input', (e) => {
+                    const newYaml = { ...yaml, [key]: e.target.value };
+                    adjustHeight();
+                    updateYamlNode(newYaml);
+                  });
+                }
 
                 setTimeout(adjustHeight, 0);
               } else {
@@ -223,7 +262,7 @@ export const RawCell = Node.create({
                 });
               }
 
-              input.value = value || '';
+              input.value = structuredValue ? formatYamlFragment(value) : (value || '');
               input.setAttribute('data-property', key);
               input.classList.add(`property-input--${key.toLowerCase()}`);
               valueDiv.appendChild(input);
@@ -233,20 +272,6 @@ export const RawCell = Node.create({
             };
 
             const createPropertyRow = (key, value) => {
-              if (typeof value === 'object' && value !== null) {
-                const container = document.createElement('div');
-                const parentRow = createBasicRow(key, '');
-                container.appendChild(parentRow);
-
-                Object.entries(value).forEach(([subKey, subValue]) => {
-                  const childRow = createBasicRow(subKey, subValue);
-                  childRow.setAttribute('data-parent', key);
-                  container.appendChild(childRow);
-                });
-
-                return container;
-              }
-
               return createBasicRow(key, value);
             };
 

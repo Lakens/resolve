@@ -19,6 +19,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Mathematics from 'tiptap-math';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
+import Link from '@tiptap/extension-link';
 import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
@@ -105,6 +106,7 @@ const EditorWrapper = ({
   const [rawSource, setRawSource] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const [appVersion, setAppVersion] = useState('');
+  const [commentsRefreshKey, setCommentsRefreshKey] = useState(0);
   const menuRef = useRef(null);
   const lastEditAtRef = useRef(Date.now());
   const lastAutosaveAtRef = useRef(0);
@@ -177,6 +179,12 @@ const EditorWrapper = ({
       CodeCell,
       Underline,
       Highlight,
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        defaultProtocol: 'https',
+      }),
       Table,
       TableCell,
       TableHeader,
@@ -239,6 +247,11 @@ const EditorWrapper = ({
       // Leaving source mode: parse edited text back into TipTap
       qmdToTiptapDoc(rawSource, editor);
       setShowSource(false);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setCommentsRefreshKey((prev) => prev + 1);
+        });
+      });
     }
   }, [editor, showSource, rawSource]);
 
@@ -780,7 +793,7 @@ const EditorWrapper = ({
               </div>
               {showDiff    && <DiffViewer editor={editor} selectedRepo={selectedRepo} filePath={filePath} />}
               {showPreview && !showDiff && <PreviewPane editor={editor} references={references || referenceManager?.getReferences()} inlineRCache={inlineRCache} filePath={filePath} />}
-              {!showPreview && !showDiff && editor && <CommentsSidebar editor={editor} />}
+              {!showPreview && !showDiff && editor && <CommentsSidebar editor={editor} refreshKey={commentsRefreshKey} />}
             </div>
           </div>
         )}

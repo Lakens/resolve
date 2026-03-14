@@ -4,7 +4,7 @@ import { formatTimeAgo } from '../../utils/timeUtils';
 import { AuthContext } from '../../contexts/AuthContext';
 import '../../styles/components/comments/_sidebar.css';
 
-export const CommentsSidebar = ({ editor }) => {
+export const CommentsSidebar = ({ editor, refreshKey = 0 }) => {
   const [comments, setComments] = useState([]);
   const [userThemes, setUserThemes] = useState(() => {
     // Initialize from localStorage if available
@@ -160,8 +160,10 @@ export const CommentsSidebar = ({ editor }) => {
     // Update comments whenever the editor content changes
     editor.on('update', updateComments);
     
-    // Initial update
-    updateComments();
+    // Initial update after layout settles so coordsAtPos can use the visible editor.
+    const refreshFrame = requestAnimationFrame(() => {
+      requestAnimationFrame(updateComments);
+    });
 
     const editorElement = editor.view.dom.closest('.editor-content-container');
     
@@ -188,13 +190,14 @@ export const CommentsSidebar = ({ editor }) => {
 
     return () => {
       editor.off('update', updateComments);
+      cancelAnimationFrame(refreshFrame);
       if (editorElement) {
         editorElement.removeEventListener('mouseover', handleMarkMouseEnter);
         editorElement.removeEventListener('mouseout', handleMarkMouseLeave);
         editorElement.removeEventListener('scroll', updateComments);
       }
     };
-  }, [editor, user]);
+  }, [editor, user, refreshKey]);
 
   const handleMarkHover = (commentId) => {
     requestAnimationFrame(() => {

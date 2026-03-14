@@ -21,6 +21,7 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
+import Link from '@tiptap/extension-link';
 import Mathematics from 'tiptap-math';
 import InlineMath from './utils/InlineMath/inlineMath';
 
@@ -97,6 +98,12 @@ function App() {
         CodeCell,
         Underline,
         Highlight,
+        Link.configure({
+          openOnClick: false,
+          autolink: true,
+          linkOnPaste: true,
+          defaultProtocol: 'https',
+        }),
         Table.configure({
           resizable: true,
         }),

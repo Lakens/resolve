@@ -107,7 +107,7 @@ Click the **Share** button in the toolbar to get a shareable link to the documen
 
 ## 3\. Adding References
 
-QuartoReview has built-in support for academic references using `.bib` bibliography files. You need to have Zotero installed and open, and the 'BetterBibtex' plugin. This will allow you to directly communicate with your Zotero library. Alternatively, you can manually edit the .bib file.
+QuartoReview has built-in support for academic references using `.bib` bibliography files. You can add references either from Zotero or by entering a DOI. For Zotero import, you need Zotero installed and open, together with the Better BibTeX plugin. Alternatively, you can manually edit the `.bib` file.
 
 ### Setting Up a Bibliography
 
@@ -115,7 +115,7 @@ QuartoReview has built-in support for academic references using `.bib` bibliogra
     
 *   QuartoReview will detect and load it automatically when you open the file.
 
-### Inserting a Citation
+### Inserting a Citation from Zotero
 
 1.  Position your cursor where you want the citation, or select some text.
     
@@ -123,9 +123,19 @@ QuartoReview has built-in support for academic references using `.bib` bibliogra
     
 3.  In the citation dialog, you can **search your existing bibliography** by author, title, or key and select an entry. The citation is inserted as `[@citation-key]` in the source file. In the Preview window it renders as a formatted inline citation with following APA 7 guidelines.
 
+### Inserting a Citation from a DOI
+
+1.  Select the word or phrase where you want to insert the citation.
+    
+2.  In the small selection toolbar that appears, choose the citation option and enter a DOI such as `10.1037/xlm0001204`.
+    
+3.  Press **Enter** or click the checkmark.
+    
+4.  QuartoReview fetches the BibTeX entry for that DOI, inserts the citation into the document, and adds the reference to your bibliography.
+
 ### Bibliography File
 
-When you add a citation via Zotero, the reference is automatically appended to your `references.bib` file and saved alongside your document (either locally or to GitHub).
+When you add a citation via Zotero or DOI, the reference is automatically appended to your `references.bib` file and saved alongside your document in GitHub mode.
 
 * * *
 

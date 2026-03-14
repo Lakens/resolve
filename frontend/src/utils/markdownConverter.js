@@ -1,5 +1,11 @@
 import MarkdownIt from 'markdown-it';
+import markdownItAnchor from 'markdown-it-anchor';
+import markdownItEmoji from 'markdown-it-emoji';
+import markdownItFootnote from 'markdown-it-footnote';
 import markdownItIns from 'markdown-it-ins';
+import markdownItSub from 'markdown-it-sub';
+import markdownItSup from 'markdown-it-sup';
+import markdownItTaskLists from 'markdown-it-task-lists';
 import TurndownService from 'turndown';
 import { tables, strikethrough } from 'turndown-plugin-gfm';
 
@@ -153,7 +159,13 @@ const md = new MarkdownIt({
   linkify: true,
   typographer: true
 })
+.use(markdownItAnchor)
+.use(markdownItEmoji)
+.use(markdownItFootnote)
 .use(markdownItIns)
+.use(markdownItSub)
+.use(markdownItSup)
+.use(markdownItTaskLists, { enabled: true, label: true, labelAfter: true })
 .use(markdownItCitations);
 
 // Custom rule for display math ($$...$$)
