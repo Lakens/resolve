@@ -2,6 +2,8 @@
 
 QuartoReview is a desktop application for editing and reviewing Quarto (`.qmd`), R Markdown (`.Rmd`), and Markdown (`.md`) documents. It provides a rich WYSIWYG editor with track changes, comments, references, R chunk preview, and version comparison.
 
+**Be aware that this tool can contain bugs, and can overwrite your files. Keep a backup version of all documents you will edit with this tool.**
+
 * * *
 
 ## 1\. Opening and Saving Files
@@ -105,7 +107,7 @@ Click the **Share** button in the toolbar to get a shareable link to the documen
 
 ## 3\. Adding References
 
-QuartoReview has built-in support for academic references using `.bib` bibliography files.
+QuartoReview has built-in support for academic references using `.bib` bibliography files. You need to have Zotero installed and open, and the 'BetterBibtex' plugin. This will allow you to directly communicate with your Zotero library. Alternatively, you can manually edit the .bib file.
 
 ### Setting Up a Bibliography
 
@@ -117,30 +119,13 @@ QuartoReview has built-in support for academic references using `.bib` bibliogra
 
 1.  Position your cursor where you want the citation, or select some text.
     
-2.  A small toolbar appears — click the **cite icon** (📖).
+2.  Click the 'Cite' button in the toolbar to launch the Zotero selection window.
     
-3.  In the citation dialog, you can:
-    
-    *   **Search your existing bibliography** by author, title, or key and select an entry.
-        
-    *   **Enter a DOI** to automatically fetch the reference from the internet and add it to your `references.bib` file.
-        
-4.  The citation is inserted as `[@citation-key]` in the source. In the WYSIWYG view it renders as a formatted inline citation.
-
-### Citation Syntax (for manual editing)
-
-If you prefer to edit citations directly in the source, use standard Pandoc citation syntax:
-
-| Syntax | Result |
-| --- | --- |
-| @smith2020 | Single citation |
-| @smith2020 | Multiple citations |
-| @smith2020 | Citation with page number |
-| @smith2020 | Suppress author name |
+3.  In the citation dialog, you can **search your existing bibliography** by author, title, or key and select an entry. The citation is inserted as `[@citation-key]` in the source file. In the Preview window it renders as a formatted inline citation with following APA 7 guidelines.
 
 ### Bibliography File
 
-When you add a citation via DOI, the reference is automatically appended to your `references.bib` file and saved alongside your document (either locally or to GitHub).
+When you add a citation via Zotero, the reference is automatically appended to your `references.bib` file and saved alongside your document (either locally or to GitHub).
 
 * * *
 
@@ -160,11 +145,17 @@ summary(mtcars)
 
 ### Previewing Output
 
-1.  Click the **Run** button (▶) inside an R chunk, or use the **Run All** button in the toolbar to evaluate all chunks.
+1.  Click the **Run** button (▶) inside an R chunk.
     
-2.  Output appears directly below the chunk: tables, plots, and text output are all rendered inline.
+2.  Output appears directly below the chunk, printed by WebR: tables, plots, and text output are all rendered inline.
+
+### R inline code
+
+To view all inline code (presented in Qmd files inside "\`") you can click the 'r' button in the toolbar. This will achieve two things
+
+1.  In the text editor, the inline code will change color, and hovering over the inline code will show the result of the code. The code is not replaced with the result, as this is the raw Qmd file.
     
-3.  If R is not installed or not available, chunk output cannot be evaluated locally. The chunk text is still fully editable.
+2.  In the preview window, inline code chunks are replaced by the result of the code.
 
 ### Chunk Options
 
@@ -183,35 +174,33 @@ These options are written and preserved verbatim — editing them in the WYSIWYG
 
 ## 5\. Comparing and Exporting Differences Across Versions
 
-QuartoReview includes a **Diff Viewer** that lets you compare two versions of a document and export the differences.
+QuartoReview includes a **Diff** Viewer that lets you compare two versions of a document and export the differences.
 
 ### Opening the Diff Viewer
 
-1.  Click the **Diff** button in the toolbar (or select it from the menu).
+1.  Click the **Diff** button in the toolbar.
     
 2.  The diff viewer opens in a split-pane view.
 
 ### Comparing Versions
 
-You can compare:
+You can select the option ‘Since this version’ or ‘In this version’.
 
-*   **Two GitHub commits**: Select a repository and choose two commits from the dropdowns. The diff is computed from the raw `.qmd`/`.Rmd`/`.md` source files.
+*   **Select a previous version of the document from the GitHub repository.** The diff is computed from the raw `.qmd`/`.Rmd`/`.md` source files, and compared to the current version.
     
-*   **Current document vs. saved version**: The diff highlights what has changed since the last save.
+*   **Since this version vs. In this version**: The diff highlights what has changed since the last version selected, or the changes that were made in that version compared to the version immediately preceding it.
 
 Differences are shown line by line:
 
 *   **Green lines** — added content
     
 *   **Red lines** — removed content
-    
-*   **Unchanged lines** — shown for context
 
 ### Exporting Differences
 
-1.  In the diff viewer, click **Export** (or **Download**).
+1.  In the diff viewer, click **Download HTML**.
     
-2.  The diff is exported as a formatted document (Word `.docx` or plain text) showing added and removed content, suitable for sharing with collaborators or reviewers who do not use QuartoReview.
+2.  The diff is exported as an html document (`.html`) showing added and removed content, suitable for sharing with collaborators or reviewers to communicate all changes - in text and in code - since a previous version.
 
 * * *
 
@@ -237,18 +226,6 @@ The toolbar runs across the top of the editor and contains the main controls:
 | Share | (GitHub mode) Share the document |
 | Dark mode | Toggle between light and dark theme |
 | Menu | Hamburger menu: Open local file, Set up GitHub, Feedback |
-
-### Sidebar
-
-The sidebar on the right shows:
-
-*   **Comments** — all <span data-comment-id="comment-1773485768454" data-username="Daniel Lakens" data-avatar-url="https://avatars.githubusercontent.com/u/6490081?v=4" data-text="test" data-timestamp="2026-03-14T10:56:08.454Z" data-resolved="false">comments</span> in the document, in order. Click a<ins data-op-user-id="" data-op-user-nickname="" data-op-date="1773485820000">n</ins> comment to jump to it in the editor.
-    
-*   **Track changes** — pending suggestions that can be accepted or rejected.
-
-Click the sidebar toggle button to show or hide the sidebar.
-
-
 
 ### Dark Mode
 
