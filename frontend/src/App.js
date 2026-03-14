@@ -43,6 +43,7 @@ function App() {
   const [ipynb, setIpynb] = useState(null);
   const [qmdContent, setQmdContent] = useState(null);
   const [localFilePath, setLocalFilePath] = useState(null); // OS path when a local file is open
+  const [startupGuideActive, setStartupGuideActive] = useState(false);
   const [referenceManager, setReferenceManager] = useState(null);
   const [references, setReferences] = useState([]); // Add references state
   const [saveMessage, setSaveMessage] = useState('');
@@ -65,6 +66,7 @@ function App() {
 
       hasLoadedStartupGuide.current = true;
       setLocalFilePath(result.filePath || result.displayName || 'GUIDE.md');
+      setStartupGuideActive(true);
       setQmdContent(result.content);
       setIpynb(null);
       setSelectedRepo(null);
@@ -199,9 +201,17 @@ function App() {
     const result = await window.quartoReviewDesktop?.openLocalFile();
     if (!result) return;
     setLocalFilePath(result.filePath);
+    setStartupGuideActive(false);
     setQmdContent(result.content);
     setIpynb(null);
     setSelectedRepo(null);
+  };
+
+  const handleSwitchToGitHubMode = () => {
+    setLocalFilePath(null);
+    setStartupGuideActive(false);
+    setQmdContent(null);
+    setIpynb(null);
   };
 
   const handleSaveLocalFile = async (editor) => {
@@ -235,6 +245,9 @@ function App() {
 
     isLoadingFile.current = true;
     try {
+      setLocalFilePath(null);
+      setStartupGuideActive(false);
+
       if (filePath.endsWith('.qmd') || filePath.endsWith('.Rmd') || filePath.endsWith('.rmd') || filePath.endsWith('.md')) {
         // --- QMD/Rmd/Md path: no user required ---
         const result = await fetchFile(filePath, selectedRepo.fullName);
@@ -377,6 +390,8 @@ function App() {
         extensions={editorExtensions}
         references={references}
         localFilePath={localFilePath}
+        startupGuideActive={startupGuideActive}
+        handleSwitchToGitHubMode={handleSwitchToGitHubMode}
         handleOpenLocalFile={handleOpenLocalFile}
         handleSaveLocalFile={handleSaveLocalFile}
       />

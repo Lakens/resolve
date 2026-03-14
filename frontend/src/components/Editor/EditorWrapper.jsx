@@ -79,6 +79,8 @@ const EditorWrapper = ({
   extensions,
   references,
   localFilePath,
+  startupGuideActive,
+  handleSwitchToGitHubMode,
   handleOpenLocalFile,
   handleSaveLocalFile,
 }) => {
@@ -482,7 +484,7 @@ const EditorWrapper = ({
           <img src="/logo.png" alt="QuartoReview" className="app-logo" />
 
           {/* GitHub file selectors — only when not in local-file mode */}
-          {!localFilePath && (
+          {(!localFilePath || startupGuideActive) && (
             <>
               <select
                 value={selectedRepo?.fullName || ''}
@@ -520,6 +522,12 @@ const EditorWrapper = ({
             <span className="hdr-local-filename" title={localFilePath}>
               {localFilePath.split(/[\\/]/).pop()}
             </span>
+          )}
+
+          {startupGuideActive && (
+            <button className="hdr-btn" onClick={handleSwitchToGitHubMode}>
+              Switch to GitHub
+            </button>
           )}
 
           <button className="hdr-btn" onClick={onSaveFileClick}>Save</button>
