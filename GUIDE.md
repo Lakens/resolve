@@ -175,7 +175,7 @@ Common chunk options you can set directly in the chunk header:
 | echo=FALSE | Hide code, show output |
 | eval=FALSE | Show code, do not run |
 | include=FALSE | Run code, hide everything |
-| fig.cap="..." | Add a figure caption |
+| fig.cap=“…” | Add a figure caption |
 
 These options are written and preserved verbatim — editing them in the WYSIWYG view updates the underlying source correctly.
 
@@ -242,15 +242,13 @@ The toolbar runs across the top of the editor and contains the main controls:
 
 The sidebar on the right shows:
 
-*   **Comments** — all comments in the document, in order. Click a comment to jump to it in the editor.
+*   **Comments** — all <span data-comment-id="comment-1773485768454" data-username="Daniel Lakens" data-avatar-url="https://avatars.githubusercontent.com/u/6490081?v=4" data-text="test" data-timestamp="2026-03-14T10:56:08.454Z" data-resolved="false">comments</span> in the document, in order. Click a<ins data-op-user-id="" data-op-user-nickname="" data-op-date="1773485820000">n</ins> comment to jump to it in the editor.
     
 *   **Track changes** — pending suggestions that can be accepted or rejected.
 
 Click the sidebar toggle button to show or hide the sidebar.
 
-### Presence Indicators (GitHub mode)
 
-When multiple people have the same GitHub document open, their avatars appear in the toolbar. QuartoReview does **not** support simultaneous editing — presence indicators help you avoid editing at the same time as someone else.
 
 ### Dark Mode
 
@@ -266,5 +264,3 @@ Click the **moon icon** (🌙) in the toolbar to switch to dark mode. The settin
 | Ctrl+Z | Undo |
 | Ctrl+Y | Redo |
 | Ctrl+Shift+C | Add comment |
-
-
