@@ -248,6 +248,20 @@ function createMainWindow() {
     return { action: 'deny' };
   });
 
+  // The renderer's beforeunload handler blocks window close silently in
+  // Electron. Override it: allow closing but ask via a native dialog instead.
+  mainWindow.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type: 'question',
+      buttons: ['Leave', 'Cancel'],
+      defaultId: 0,
+      cancelId: 1,
+      message: 'You have unsaved changes.',
+      detail: 'Close anyway?',
+    });
+    if (choice === 0) event.preventDefault(); // 0 = "Leave" → allow close
+  });
+
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => { mainWindow = null; });
   return mainWindow;
