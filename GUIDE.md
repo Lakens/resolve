@@ -20,7 +20,7 @@ QuartoReview supports two modes: **local file mode** and **GitHub mode**. You ca
     
 4.  The file opens in the editor. The filename appears in the toolbar.
     
-5.  To save, click the **Save** button (💾) in the toolbar, or use **Ctrl+S**. The file is saved back to its original location on your computer — no account or internet connection required.
+5.  To save, click the **Save** button in the toolbar, or use **Ctrl+S** / **Cmd+S**. The file is saved back to its original location on your computer — no account or internet connection required.
 
 In local file mode, **no data leaves your computer**.
 
@@ -240,9 +240,13 @@ Click the **moon icon** (🌙) in the toolbar to switch to dark mode. The settin
 
 | Shortcut | Action |
 | --- | --- |
-| Ctrl+S | Save file |
-| Ctrl+B | Bold |
-| Ctrl+I | Italic |
-| Ctrl+Z | Undo |
-| Ctrl+Y | Redo |
-| Ctrl+Shift+C | Add comment |
+| Ctrl+S / Cmd+S | Save file |
+| Ctrl+F / Cmd+F | Find in the current document |
+| Ctrl+Shift+P / Cmd+Shift+P | Toggle preview |
+| Ctrl+Shift+D / Cmd+Shift+D | Toggle diff view |
+| Ctrl+Shift+S / Cmd+Shift+S | Toggle source view |
+| Ctrl+Shift+E / Cmd+Shift+E | Toggle track changes |
+| Ctrl+Shift+R / Cmd+Shift+R | Evaluate inline R expressions |
+| Ctrl+Alt+Z / Cmd+Alt+Z | Add a citation from Zotero |
+| Ctrl+Alt+M / Cmd+Alt+M | Add a comment to the selected text |
+| Esc | Close the Find bar |

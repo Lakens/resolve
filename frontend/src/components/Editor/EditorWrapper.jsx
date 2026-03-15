@@ -12,7 +12,7 @@ import {
   resetFileStatus,
   setFileStatusError,
 } from '../../utils/webRSingleton';
-import { fetchNotebooksInRepo, fetchRawFile } from '../../utils/api';
+import { fetchNotebooksInRepo, fetchRawFile, zoteroPickReference } from '../../utils/api';
 import { Extension } from '@tiptap/core';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { Decoration, DecorationSet } from 'prosemirror-view';
@@ -40,10 +40,11 @@ import { CommentsSidebar } from '../Comments/CommentsSidebar';
 import { PreviewPane } from './PreviewPane';
 import LoginButton from '../Auth/LoginButton';
 import InlineMath from '../../utils/InlineMath/inlineMath';
-import { formatApaReference } from '../../utils/apaUtils';
+import { formatApaReference, formatApaInText } from '../../utils/apaUtils';
 import { HarperExtension, harperKey } from './HarperExtension';
 import { HarperPopover } from './HarperPopover';
 import DiffViewer from './DiffViewer';
+import bibtexParse from 'bibtex-parser-js';
 
 const searchHighlightKey = new PluginKey('searchHighlight');
 
@@ -128,7 +129,7 @@ const EditorWrapper = ({
   handleOpenStartupGuide,
   handleSaveLocalFile,
 }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
@@ -492,10 +493,34 @@ const EditorWrapper = ({
 
   useEffect(() => {
     const handleFindShortcut = (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'f') {
         event.preventDefault();
         setShowFindBar(true);
         focusFindInput();
+      } else if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        onSaveFileClick();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'p') {
+        event.preventDefault();
+        togglePreview();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'd') {
+        event.preventDefault();
+        toggleDiff();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        handleToggleSource();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'e') {
+        event.preventDefault();
+        onToggleTrackChanges();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
+        event.preventDefault();
+        handleRenderInlineR();
+      } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        handleCiteZoteroShortcut();
+      } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'm') {
+        event.preventDefault();
+        handleAddCommentShortcut();
       } else if (event.key === 'Escape') {
         setShowFindBar(false);
       }
@@ -503,7 +528,16 @@ const EditorWrapper = ({
 
     window.addEventListener('keydown', handleFindShortcut);
     return () => window.removeEventListener('keydown', handleFindShortcut);
-  }, [focusFindInput]);
+  }, [
+    focusFindInput,
+    handleAddCommentShortcut,
+    handleCiteZoteroShortcut,
+    handleRenderInlineR,
+    handleToggleSource,
+    onToggleTrackChanges,
+    toggleDiff,
+    togglePreview,
+  ]);
 
   const handleRenderInlineR = useCallback(async () => {
     if (!editor || isRenderingInlineR) return;
@@ -524,6 +558,83 @@ const EditorWrapper = ({
       setIsRenderingInlineR(false);
     }
   }, [editor, isRenderingInlineR]);
+
+  const togglePreview = useCallback(() => {
+    setShowPreview((value) => !value);
+    setShowDiff(false);
+  }, []);
+
+  const toggleDiff = useCallback(() => {
+    setShowDiff((value) => !value);
+    setShowPreview(false);
+  }, []);
+
+  const handleAddCommentShortcut = useCallback(() => {
+    if (!editor || showSource) return;
+
+    const { from, to } = editor.state.selection;
+    if (from === to) return;
+
+    const commentText = window.prompt('Add comment:');
+    if (!commentText?.trim()) return;
+
+    editor.chain().focus().addComment({
+      commentId: `comment-${Date.now()}`,
+      username: user?.name || user?.login || 'Anonymous',
+      avatarUrl: user?.avatar_url,
+      text: commentText.trim(),
+      timestamp: new Date().toISOString(),
+    }).run();
+  }, [editor, showSource, user]);
+
+  const handleCiteZoteroShortcut = useCallback(async () => {
+    if (!editor || !referenceManager || showSource) return;
+
+    try {
+      const bibtex = await zoteroPickReference();
+      if (!bibtex || !bibtex.trim()) return;
+
+      const parsed = bibtexParse.toJSON(bibtex);
+      if (!parsed || parsed.length === 0) return;
+
+      for (const entry of parsed) {
+        const ref = {
+          ...entry,
+          citationKey: entry.citationKey || entry.key || '',
+          entryTags: entry.entryTags || {},
+        };
+        referenceManager.addReference(ref);
+      }
+      await referenceManager.save();
+
+      for (const entry of parsed) {
+        const citationKey = entry.citationKey || entry.key || '';
+        const displayText = formatApaInText(entry.entryTags || {});
+        editor.chain().focus()
+          .insertContent({
+            type: 'text',
+            marks: [{
+              type: 'citation',
+              attrs: {
+                citationKey,
+                isInBrackets: true,
+                referenceDetails: JSON.stringify(entry.entryTags || {}),
+                prefix: null,
+                suffix: null,
+                locator: null,
+              },
+            }],
+            text: displayText,
+          })
+          .unsetMark('citation')
+          .insertContent({ type: 'text', text: ' ' })
+          .run();
+      }
+    } catch (error) {
+      console.error('[Zotero shortcut] Error:', error);
+      window.alert(error.response?.data?.error || 'Could not reach Zotero. Make sure Zotero is open with Better BibTeX installed.');
+    }
+  }, [editor, referenceManager, showSource]);
 
   const handleToggleSource = useCallback(() => {
     if (!showSource) {
