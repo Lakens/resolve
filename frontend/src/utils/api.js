@@ -20,16 +20,21 @@ const api = axios.create({
   }
 });
 
+const isExpectedUnauthorized = (error) =>
+  error?.response?.status === 401 && error?.config?.url?.includes('/api/user');
+
 // Add response interceptor for debugging
 api.interceptors.response.use(
   response => response,
   error => {
-    console.error('API Error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      headers: error.response?.headers
-    });
+    if (!isExpectedUnauthorized(error)) {
+      console.error('API Error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
+    }
     return Promise.reject(error);
   }
 );
@@ -111,7 +116,9 @@ export const fetchUser = async () => {
     const res = await api.get('/api/user');
     return res.data;
   } catch (err) {
-    console.error('Error fetching user:', err);
+    if (!isExpectedUnauthorized(err)) {
+      console.error('Error fetching user:', err);
+    }
     return null;
   }
 };

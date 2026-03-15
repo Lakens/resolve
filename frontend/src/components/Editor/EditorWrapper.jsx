@@ -491,54 +491,6 @@ const EditorWrapper = ({
     });
   }, [editor, findMatches, activeFindMatchIndex, showSource]);
 
-  useEffect(() => {
-    const handleFindShortcut = (event) => {
-      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'f') {
-        event.preventDefault();
-        setShowFindBar(true);
-        focusFindInput();
-      } else if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 's') {
-        event.preventDefault();
-        onSaveFileClick();
-      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'p') {
-        event.preventDefault();
-        togglePreview();
-      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'd') {
-        event.preventDefault();
-        toggleDiff();
-      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 's') {
-        event.preventDefault();
-        handleToggleSource();
-      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'e') {
-        event.preventDefault();
-        onToggleTrackChanges();
-      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
-        event.preventDefault();
-        handleRenderInlineR();
-      } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'z') {
-        event.preventDefault();
-        handleCiteZoteroShortcut();
-      } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'm') {
-        event.preventDefault();
-        handleAddCommentShortcut();
-      } else if (event.key === 'Escape') {
-        setShowFindBar(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleFindShortcut);
-    return () => window.removeEventListener('keydown', handleFindShortcut);
-  }, [
-    focusFindInput,
-    handleAddCommentShortcut,
-    handleCiteZoteroShortcut,
-    handleRenderInlineR,
-    handleToggleSource,
-    onToggleTrackChanges,
-    toggleDiff,
-    togglePreview,
-  ]);
-
   const handleRenderInlineR = useCallback(async () => {
     if (!editor || isRenderingInlineR) return;
     setIsRenderingInlineR(true);
@@ -759,6 +711,55 @@ const EditorWrapper = ({
     setCommitMsg('');
     setShowCommitDialog(true);
   };
+
+  useEffect(() => {
+    const handleFindShortcut = (event) => {
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        setShowFindBar(true);
+        focusFindInput();
+      } else if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        onSaveFileClick();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'p') {
+        event.preventDefault();
+        togglePreview();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'd') {
+        event.preventDefault();
+        toggleDiff();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        handleToggleSource();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'e') {
+        event.preventDefault();
+        onToggleTrackChanges();
+      } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
+        event.preventDefault();
+        handleRenderInlineR();
+      } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        handleCiteZoteroShortcut();
+      } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'm') {
+        event.preventDefault();
+        handleAddCommentShortcut();
+      } else if (event.key === 'Escape') {
+        setShowFindBar(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleFindShortcut);
+    return () => window.removeEventListener('keydown', handleFindShortcut);
+  }, [
+    focusFindInput,
+    handleAddCommentShortcut,
+    handleCiteZoteroShortcut,
+    handleRenderInlineR,
+    handleToggleSource,
+    onSaveFileClick,
+    onToggleTrackChanges,
+    toggleDiff,
+    togglePreview,
+  ]);
 
   const onCommitConfirm = async () => {
     setShowCommitDialog(false);

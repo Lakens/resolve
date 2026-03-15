@@ -2,19 +2,18 @@ import React from 'react';
 import { getCurrentTime, isWithin30Minutes } from '../utils/timeUtils';
 
 const WarningBanner = ({ editors, currentUser }) => {
-  console.log('WarningBanner rendering with editors:', editors);
-
-  if (!editors || editors.length === 0) return null;
+  if (!Array.isArray(editors) || editors.length === 0) return null;
 
   const now = new Date(getCurrentTime());
   const activeEditors = editors.filter(editor => isWithin30Minutes(editor.timestamp));
+  const currentUserName = currentUser?.name || currentUser?.login || null;
 
   if (activeEditors.length === 0) return null;
 
-  const isFirstUser = activeEditors[0].name === (currentUser.name || currentUser.login);
-  const otherEditors = activeEditors.filter(editor => 
-    editor.name !== (currentUser.name || currentUser.login)
-  );
+  const isFirstUser = currentUserName ? activeEditors[0].name === currentUserName : false;
+  const otherEditors = currentUserName
+    ? activeEditors.filter(editor => editor.name !== currentUserName)
+    : activeEditors.slice(1);
 
   const renderMessage = () => {
     if (isFirstUser) {
