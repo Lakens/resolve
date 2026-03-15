@@ -15,6 +15,7 @@ const DiffViewer = ({ editor, selectedRepo, filePath }) => {
 
   const repoName = selectedRepo?.fullName;
   const isQmd    = filePath?.endsWith('.qmd') || filePath?.endsWith('.Rmd') || filePath?.endsWith('.rmd') || filePath?.endsWith('.md');
+  const isGitHubBacked = Boolean(repoName && filePath);
 
   // Load commit history whenever repo/file change
   useEffect(() => {
@@ -94,6 +95,16 @@ const DiffViewer = ({ editor, selectedRepo, filePath }) => {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (!isGitHubBacked) {
+    return (
+      <div className="diff-viewer">
+        <div className="diff-unsupported">
+          Diff view is only available for files loaded from GitHub.
+        </div>
+      </div>
+    );
+  }
 
   if (!isQmd) {
     return (

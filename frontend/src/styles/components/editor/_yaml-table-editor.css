@@ -205,6 +205,7 @@
 .property-row--title .property-label,
 .property-row--subtitle .property-label,
 .property-row--author .property-label,
+.property-row--authors .property-label,
 .property-row--affiliations .property-label,
 .property-row--date .property-label {
   display: none;
@@ -240,13 +241,19 @@
 
 .property-row--title .property-value textarea[data-property="title"] {
   min-height: 0;
-  padding: 0.1rem 0 0.3rem;
-  font-size: clamp(1.9rem, 3vw, 2.7rem);
-  line-height: 1.15;
+  padding: 0;
+  font-size: 1.9em;
+  line-height: 1.3;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
   text-align: center;
   color: #0f172a;
+  resize: none;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .property-row--subtitle .property-value input[data-property="subtitle"] {
@@ -279,14 +286,22 @@
 
 .property-row--author .property-value textarea[data-property="author"],
 .property-row--author .property-value textarea[data-property="authors"],
+.property-row--authors .property-value textarea[data-property="author"],
+.property-row--author .property-value textarea[data-property="authors"],
 .property-row--affiliations .property-value textarea[data-property="affiliations"],
 .property-row--date .property-value textarea[data-property="date"] {
   min-height: 0;
-  padding: 0.1rem 0;
+  padding: 0;
   font-size: 0.98rem;
   line-height: 1.55;
-  text-align: left;
+  text-align: center;
   color: #334155;
+  resize: none;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .property-row--abstract .property-value {
@@ -322,6 +337,11 @@
   display: none;
 }
 
+.property-row--author.property-row--structured .property-label,
+.property-row--authors.property-row--structured .property-label {
+  display: none;
+}
+
 .property-row--structured .property-value {
   width: 100%;
   max-width: 860px;
@@ -338,6 +358,37 @@
   font-size: 0.92rem;
   line-height: 1.55;
   white-space: pre-wrap;
+}
+
+.property-row--title .property-value textarea,
+.property-row--subtitle .property-value textarea,
+.property-row--author .property-value textarea,
+.property-row--authors .property-value textarea,
+.property-row--affiliations .property-value textarea,
+.property-row--date .property-value textarea {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.property-row--title .property-value textarea:hover,
+.property-row--title .property-value textarea:focus,
+.property-row--subtitle .property-value textarea:hover,
+.property-row--subtitle .property-value textarea:focus,
+.property-row--author .property-value textarea:hover,
+.property-row--author .property-value textarea:focus,
+.property-row--authors .property-value textarea:hover,
+.property-row--authors .property-value textarea:focus,
+.property-row--affiliations .property-value textarea:hover,
+.property-row--affiliations .property-value textarea:focus,
+.property-row--date .property-value textarea:hover,
+.property-row--date .property-value textarea:focus {
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .property-row--structured .property-value textarea:hover,

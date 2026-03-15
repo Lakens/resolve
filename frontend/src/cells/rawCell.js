@@ -44,6 +44,61 @@ function isStructuredValue(value) {
   return Array.isArray(value) || (typeof value === 'object' && value !== null);
 }
 
+function summarizeStructuredValue(key, value) {
+  if (!isStructuredValue(value)) return value ?? '';
+
+  if (Array.isArray(value)) {
+    if (key.toLowerCase() === 'author') {
+      return value
+        .map((entry) => {
+          if (typeof entry === 'string') return entry;
+          if (entry && typeof entry === 'object') {
+            if (entry.name) return entry.name;
+            if (entry.family || entry.given) {
+              return [entry.given, entry.family].filter(Boolean).join(' ');
+            }
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    if (key.toLowerCase() === 'affiliations') {
+      return value
+        .map((entry) => {
+          if (typeof entry === 'string') return entry;
+          if (entry && typeof entry === 'object') {
+            return entry.name || entry.id || entry.department || '';
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .join(', ');
+    }
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    if (key.toLowerCase() === 'author') {
+      if (value.name) return value.name;
+      if (value.family || value.given) {
+        return [value.given, value.family].filter(Boolean).join(' ');
+      }
+    }
+    if (key.toLowerCase() === 'affiliations') {
+      return value.name || value.id || value.department || '';
+    }
+  }
+
+  return formatYamlFragment(value);
+}
+
+function autosizeTextarea(field) {
+  if (!field || field.tagName !== 'TEXTAREA') return;
+  field.style.height = 'auto';
+  field.style.height = `${field.scrollHeight}px`;
+}
+
 export const RawCell = Node.create({
     name: 'rawCell',
     group: 'block',
@@ -109,9 +164,18 @@ export const RawCell = Node.create({
         const dom = document.createElement('div');
         dom.setAttribute('data-type', 'raw-cell');
         dom.classList.add('raw-cell');
+        const cleanupFns = [];
         const renderNode = (renderedNode) => {
           dom.className = 'raw-cell';
           dom.replaceChildren();
+          while (cleanupFns.length) {
+            const cleanup = cleanupFns.pop();
+            try {
+              cleanup();
+            } catch (error) {
+              console.error('Failed to clean up raw cell observer:', error);
+            }
+          }
 
           if (renderedNode.attrs.isYamlHeader && renderedNode.attrs.isAcademicArticle) {
             dom.classList.add('academic-frontpage');
@@ -131,8 +195,19 @@ export const RawCell = Node.create({
               const row = document.createElement('div');
               row.classList.add('property-row', `property-row--${key.toLowerCase()}`);
               row.setAttribute('data-property', key);
-              const structuredValue = isStructuredValue(value);
-              if (structuredValue) {
+              const isComplexStructuredValue =
+                isStructuredValue(value) &&
+                !['author', 'affiliations'].includes(key.toLowerCase());
+              const prefersTextarea = [
+                'title',
+                'subtitle',
+                'author',
+                'authors',
+                'affiliations',
+                'date',
+                'abstract'
+              ].includes(key.toLowerCase());
+              if (isStructuredValue(value)) {
                 row.classList.add('property-row--structured');
               }
 
@@ -145,14 +220,14 @@ export const RawCell = Node.create({
 
               let input;
               if (
-                key === 'title' ||
-                key === 'subtitle' ||
-                key === 'abstract' ||
-                structuredValue ||
+                prefersTextarea ||
+                isComplexStructuredValue ||
                 (typeof value === 'string' && value.length > 100)
               ) {
                 input = document.createElement('textarea');
                 input.rows = key === 'abstract' ? '4' : '1';
+                input.wrap = 'soft';
+                input.setAttribute('wrap', 'soft');
                 input.spellcheck = key !== 'author' && key !== 'affiliations';
               } else {
                 input = document.createElement('input');
@@ -206,12 +281,7 @@ export const RawCell = Node.create({
               setupInputHandling(input);
 
               if (input.tagName === 'TEXTAREA') {
-                const adjustHeight = () => {
-                  input.style.height = 'auto';
-                  input.style.height = input.scrollHeight + 'px';
-                };
-
-                if (structuredValue) {
+                if (isComplexStructuredValue) {
                   const commitStructuredValue = () => {
                     try {
                       const parsedValue = yaml.load(input.value) ?? '';
@@ -224,7 +294,7 @@ export const RawCell = Node.create({
                   };
 
                   input.addEventListener('input', () => {
-                    adjustHeight();
+                    autosizeTextarea(input);
                     input.classList.remove('property-input--invalid');
                   });
 
@@ -239,12 +309,10 @@ export const RawCell = Node.create({
                 } else {
                   input.addEventListener('input', (e) => {
                     const newYaml = { ...yaml, [key]: e.target.value };
-                    adjustHeight();
+                    autosizeTextarea(input);
                     updateYamlNode(newYaml);
                   });
                 }
-
-                setTimeout(adjustHeight, 0);
               } else {
                 input.addEventListener('input', (e) => {
                   const newYaml = { ...yaml };
@@ -262,12 +330,28 @@ export const RawCell = Node.create({
                 });
               }
 
-              input.value = structuredValue ? formatYamlFragment(value) : (value || '');
+              input.value = isComplexStructuredValue
+                ? formatYamlFragment(value)
+                : summarizeStructuredValue(key, value);
               input.setAttribute('data-property', key);
               input.classList.add(`property-input--${key.toLowerCase()}`);
               valueDiv.appendChild(input);
               row.appendChild(labelDiv);
               row.appendChild(valueDiv);
+              if (input.tagName === 'TEXTAREA') {
+                const resizeTextarea = () => autosizeTextarea(input);
+                requestAnimationFrame(resizeTextarea);
+
+                if (typeof ResizeObserver !== 'undefined') {
+                  const observer = new ResizeObserver(resizeTextarea);
+                  observer.observe(row);
+                  observer.observe(valueDiv);
+                  cleanupFns.push(() => observer.disconnect());
+                } else {
+                  window.addEventListener('resize', resizeTextarea);
+                  cleanupFns.push(() => window.removeEventListener('resize', resizeTextarea));
+                }
+              }
               return row;
             };
 
@@ -330,7 +414,14 @@ export const RawCell = Node.create({
             return true;
           },
           destroy: () => {
-            // Cleanup if needed
+            while (cleanupFns.length) {
+              const cleanup = cleanupFns.pop();
+              try {
+                cleanup();
+              } catch (error) {
+                console.error('Failed to clean up raw cell node view:', error);
+              }
+            }
           }
         };
       };

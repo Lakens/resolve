@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaSun, FaMoon, FaEdit, FaShare, FaBars } from 'react-icons/fa';
+import { FaSun, FaMoon, FaEdit, FaShare, FaBars, FaSpellCheck } from 'react-icons/fa';
 import ShareModal from '../Share/ShareModal';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -144,15 +144,6 @@ const EditorWrapper = ({
   }, [spellcheckEnabled]);
 
   useEffect(() => {
-    if (!editor?.view) return;
-    editor.view.dispatch(editor.state.tr.setMeta(harperKey, {
-      decorations: DecorationSet.empty,
-      matches: [],
-      enabled: spellcheckEnabled,
-    }));
-  }, [editor, spellcheckEnabled]);
-
-  useEffect(() => {
     const loadVersion = async () => {
       if (!window.quartoReviewDesktop?.getAppVersion) return;
       try {
@@ -173,6 +164,28 @@ const EditorWrapper = ({
   useEffect(() => {
     return subscribeFileStatus(setFileStatus);
   }, []);
+
+  useEffect(() => {
+    const shouldAutoDismiss = (pkgStatus.phase === 'done' || pkgStatus.phase === 'error') && !pkgBannerDismissed;
+    if (!shouldAutoDismiss) return undefined;
+
+    const timerId = window.setTimeout(() => {
+      setPkgBannerDismissed(true);
+    }, 5000);
+
+    return () => window.clearTimeout(timerId);
+  }, [pkgStatus.phase, pkgBannerDismissed]);
+
+  useEffect(() => {
+    const shouldAutoDismiss = (fileStatus.phase === 'done' || fileStatus.phase === 'error') && !fileBannerDismissed;
+    if (!shouldAutoDismiss) return undefined;
+
+    const timerId = window.setTimeout(() => {
+      setFileBannerDismissed(true);
+    }, 5000);
+
+    return () => window.clearTimeout(timerId);
+  }, [fileStatus.phase, fileBannerDismissed]);
 
   const handleCommentMarkUpdate = () => {
     setCommentMarkKey((prev) => prev + 1);
@@ -251,8 +264,16 @@ const EditorWrapper = ({
     setSpellcheckEnabled(nextValue);
     setHarperMatch(null);
     setHarperAnchorPos(null);
+  }, []);
 
-  }, [editor]);
+  useEffect(() => {
+    if (!editor?.view) return;
+    editor.view.dispatch(editor.state.tr.setMeta(harperKey, {
+      decorations: DecorationSet.empty,
+      matches: [],
+      enabled: spellcheckEnabled,
+    }));
+  }, [editor, spellcheckEnabled]);
 
   const handleRenderInlineR = useCallback(async () => {
     if (!editor || isRenderingInlineR) return;
@@ -686,6 +707,16 @@ const EditorWrapper = ({
           )}
           <button
             className="hdr-dark-toggle"
+            onClick={handleToggleSpellcheck}
+            title={spellcheckEnabled ? 'Turn spelling and grammar check off' : 'Turn spelling and grammar check on'}
+          >
+            <span className="hdr-dark-icon"><FaSpellCheck /></span>
+            <span className={`hdr-dark-track${spellcheckEnabled ? ' is-active' : ''}`}>
+              <span className="hdr-dark-thumb" />
+            </span>
+          </button>
+          <button
+            className="hdr-dark-toggle"
             onClick={() => setDarkMode(v => !v)}
             title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
@@ -782,8 +813,6 @@ const EditorWrapper = ({
             isRenderingInlineR={isRenderingInlineR}
             showSource={showSource}
             onToggleSource={handleToggleSource}
-            spellcheckEnabled={spellcheckEnabled}
-            onToggleSpellcheck={handleToggleSpellcheck}
           />
         )}
       </header>
