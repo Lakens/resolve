@@ -10,11 +10,11 @@ This Privacy Policy explains how QuartoReview collects, uses, and protects your 
 
 QuartoReview can be used in two ways, with different privacy implications:
 
-### 1. Local file mode (no account required)
+### 1\. Local file mode (no account required)
 
 When you open and edit local files from your computer without connecting to GitHub, **QuartoReview collects no data whatsoever.** Your files stay on your computer. Nothing is sent over the internet.
 
-### 2. GitHub mode (optional)
+### 2\. GitHub mode (optional)
 
 If you choose to connect GitHub to load and save files from your GitHub repositories, the following applies.
 
@@ -22,7 +22,7 @@ If you choose to connect GitHub to load and save files from your GitHub reposito
 
 ### GitHub authentication
 
-When you connect GitHub, you provide a GitHub Personal Access Token (PAT). This token is stored **only on your own computer**, in your local application data folder (`%APPDATA%\quartoreview\.env` on Windows). It is never sent to any QuartoReview server — because there is no QuartoReview server. The token is used exclusively to communicate directly between your computer and GitHub's API.
+When you connect GitHub, you provide a GitHub Personal Access Token (PAT). This token is stored **only on your own computer**, in your local application data folder (`%APPDATA%\quartoreview\.env` on Windows). It is never sent to any QuartoReview server — because there is no QuartoReview server. The token is used exclusively to communicate directly between your computer and GitHub’s API.
 
 ### Repository and file content
 
@@ -34,22 +34,23 @@ A session cookie is used to keep you authenticated within the local app session.
 
 ## What we do NOT collect
 
-- No usage analytics
-- No tracking or telemetry
-- No crash reports sent to external servers
-- No marketing or advertising data
-- No content of your documents
-- No server-side logs (there is no QuartoReview server)
+*   No usage analytics
+    
+*   No tracking or telemetry
+    
+*   No crash reports sent to external servers
+    
+*   No marketing or advertising data
+    
+*   No content of your documents
+    
+*   No server-side logs (there is no QuartoReview server)
 
 ## Third-party services
 
 ### GitHub
 
-If you use GitHub mode, you are subject to [GitHub's Privacy Policy](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement). QuartoReview only communicates with GitHub using your own credentials, on your behalf.
-
-### LanguageTool (optional)
-
-If you use the grammar and spell-checking feature, text from your document is sent to a LanguageTool server for analysis. By default this uses LanguageTool's public API. You can configure a local LanguageTool server to keep all text on your computer.
+If you use GitHub mode, you are subject to GitHub’s Privacy Policy. QuartoReview only communicates with GitHub using your own credentials, on your behalf.
 
 ## Data storage and security
 
@@ -65,4 +66,4 @@ We may update this Privacy Policy from time to time. Changes will be reflected b
 
 ## Contact
 
-If you have questions about this Privacy Policy, please open an issue at [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview).
+If you have questions about this Privacy Policy, please open an issue at github.com/Lakens/QuartoReview.
