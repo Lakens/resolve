@@ -1,6 +1,6 @@
 {
   "name": "quartoreview",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Electron wrapper for QuartoReview",
   "license": "MIT",
   "main": "main.cjs",
