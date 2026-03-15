@@ -19,7 +19,7 @@ const LoginButton = () => {
   const [githubToken, setGithubToken] = useState('');
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
-  const [redirectUri, setRedirectUri] = useState('http://localhost:3001/api/auth/callback');
+  const [redirectUri, setRedirectUri] = useState('http://127.0.0.1/api/auth/callback');
   const [setupError, setSetupError] = useState('');
   const [isSavingSetup, setIsSavingSetup] = useState(false);
   const [hasAutoOpenedSetup, setHasAutoOpenedSetup] = useState(false);
@@ -215,7 +215,7 @@ const LoginButton = () => {
               </div>
             ) : (
               <div className="onboarding-section">
-                <p>Use this if you want the browser-based "Continue with GitHub" login flow. Create a GitHub OAuth app, paste the credentials here, and QuartoReview will launch GitHub for sign-in.</p>
+                <p>Use this if you want the browser-based "Continue with GitHub" login flow. Create a GitHub OAuth app, paste the credentials here, and QuartoReview will launch GitHub for sign-in. For desktop installs, use the loopback callback without a fixed port.</p>
                 <button
                   className="login-secondary-button"
                   onClick={() => openExternal('https://github.com/settings/developers')}
@@ -252,6 +252,7 @@ const LoginButton = () => {
                     type="text"
                     value={redirectUri}
                     onChange={(event) => setRedirectUri(event.target.value)}
+                    placeholder="http://127.0.0.1/api/auth/callback"
                     autoComplete="off"
                   />
                 </div>

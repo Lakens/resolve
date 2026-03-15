@@ -12,7 +12,25 @@ import {
 } from '../config.js';
 
 const router = express.Router();
-const DEFAULT_REDIRECT_URI = 'http://localhost:3001/api/auth/callback';
+const DEFAULT_REDIRECT_URI = 'http://127.0.0.1/api/auth/callback';
+
+function resolveRedirectUri(req) {
+  const rawRedirectUri = String(process.env.REDIRECT_URI || DEFAULT_REDIRECT_URI).trim();
+
+  try {
+    const redirectUrl = new URL(rawRedirectUri);
+    const isLoopback = redirectUrl.hostname === '127.0.0.1' || redirectUrl.hostname === 'localhost';
+    const currentPort = req?.get?.('host')?.split(':')[1] || process.env.PORT || '';
+
+    if (isLoopback && !redirectUrl.port && currentPort) {
+      redirectUrl.port = currentPort;
+    }
+
+    return redirectUrl.toString();
+  } catch (_) {
+    return rawRedirectUri;
+  }
+}
 
 function parseCurrentEnvFile() {
   if (!fs.existsSync(backendEnvPath)) {
@@ -78,7 +96,7 @@ router.get('/', (req, res) => {
 
     const params = new URLSearchParams({
       client_id: process.env.GITHUB_CLIENT_ID,
-      redirect_uri: process.env.REDIRECT_URI,
+      redirect_uri: resolveRedirectUri(req),
       scope: 'repo'
     }).toString();
     
@@ -199,7 +217,7 @@ router.get('/callback', async (req, res) => {
         client_id: process.env.GITHUB_CLIENT_ID,
         client_secret: process.env.GITHUB_CLIENT_SECRET,
         code,
-        redirect_uri: process.env.REDIRECT_URI
+        redirect_uri: resolveRedirectUri(req)
       },
       {
         headers: {

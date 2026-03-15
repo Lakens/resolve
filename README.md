@@ -107,11 +107,13 @@ Use this if you want the explicit GitHub authorization flow.
 | Field | Value |
 |-------|-------|
 | Application name | `QuartoReview` |
-| Homepage URL | `http://localhost:3001` |
-| Authorization callback URL | `http://localhost:3001/api/auth/callback` |
+| Homepage URL | `http://127.0.0.1` |
+| Authorization callback URL | `http://127.0.0.1/api/auth/callback` |
 
 3. Paste the client ID and client secret into QuartoReview
 4. Continue to GitHub
+
+For desktop installs, QuartoReview now chooses a free local port automatically. The loopback callback above is the stable OAuth app setting, and the app fills in the active port at runtime.
 
 Desktop configuration is stored locally in:
 
@@ -166,8 +168,8 @@ In local-file mode, bibliography support is more limited and there is not yet th
 **R code gives "cannot open file ...: No such file or directory"**
 -> Check that the file exists in the repository and that the path in your code is correct relative to the document.
 
-**Port 3001 is already in use**
--> Restart QuartoReview. Recent versions now clean up old embedded backend processes more reliably after crashes.
+**A local port is already in use**
+-> Restart QuartoReview. Recent versions automatically choose a free local port and clean up old embedded backend processes more reliably after crashes.
 
 > Need help? Submit issues at [github.com/Lakens/QuartoReview](https://github.com/Lakens/QuartoReview).
 
