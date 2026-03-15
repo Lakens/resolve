@@ -159,8 +159,8 @@ const LoginButton = () => {
             <h3>GitHub</h3>
             <p>If you use GitHub mode, you are subject to <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub's Privacy Policy</a>. QuartoReview only communicates with GitHub using your own credentials, on your behalf.</p>
 
-            <h3>LanguageTool (optional)</h3>
-            <p>If you use the grammar and spell-checking feature, text from your document is sent to a LanguageTool server. You can configure a local LanguageTool server to keep all text on your computer.</p>
+            <h3>Grammar and Spell Check</h3>
+            <p>QuartoReview uses Harper for local grammar and spell checking. Checks run on your own computer and document text is not sent to an external grammar service.</p>
 
             <h2>Contact</h2>
             <p>Questions about this Privacy Policy? Please open an issue at <a href="https://github.com/Lakens/QuartoReview" target="_blank" rel="noopener noreferrer">github.com/Lakens/QuartoReview</a>.</p>

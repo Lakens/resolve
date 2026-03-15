@@ -15,6 +15,7 @@ import {
 } from '../../utils/webRSingleton';
 import { fetchNotebooksInRepo, fetchRawFile } from '../../utils/api';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { DecorationSet } from 'prosemirror-view';
 import StarterKit from '@tiptap/starter-kit';
 import Mathematics from 'tiptap-math';
 import Underline from '@tiptap/extension-underline';
@@ -39,8 +40,8 @@ import { PreviewPane } from './PreviewPane';
 import LoginButton from '../Auth/LoginButton';
 import InlineMath from '../../utils/InlineMath/inlineMath';
 import { formatApaReference } from '../../utils/apaUtils';
-import { LanguageToolExtension } from './LanguageToolExtension';
-import { LanguageToolPopover } from './LanguageToolPopover';
+import { HarperExtension, harperKey } from './HarperExtension';
+import { HarperPopover } from './HarperPopover';
 import DiffViewer from './DiffViewer';
 
 const ReferencesList = ({ references }) => {
@@ -107,7 +108,12 @@ const EditorWrapper = ({
   const [showMenu, setShowMenu] = useState(false);
   const [appVersion, setAppVersion] = useState('');
   const [commentsRefreshKey, setCommentsRefreshKey] = useState(0);
+  const [spellcheckEnabled, setSpellcheckEnabled] = useState(() => {
+    const stored = window.localStorage.getItem('harper-spellcheck-enabled');
+    return stored === null ? true : stored === 'true';
+  });
   const menuRef = useRef(null);
+  const spellcheckEnabledRef = useRef(spellcheckEnabled);
   const lastEditAtRef = useRef(Date.now());
   const lastAutosaveAtRef = useRef(0);
   const lastCheckpointAtRef = useRef(0);
@@ -131,6 +137,20 @@ const EditorWrapper = ({
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
+
+  useEffect(() => {
+    spellcheckEnabledRef.current = spellcheckEnabled;
+    window.localStorage.setItem('harper-spellcheck-enabled', String(spellcheckEnabled));
+  }, [spellcheckEnabled]);
+
+  useEffect(() => {
+    if (!editor?.view) return;
+    editor.view.dispatch(editor.state.tr.setMeta(harperKey, {
+      decorations: DecorationSet.empty,
+      matches: [],
+      enabled: spellcheckEnabled,
+    }));
+  }, [editor, spellcheckEnabled]);
 
   useEffect(() => {
     const loadVersion = async () => {
@@ -158,50 +178,57 @@ const EditorWrapper = ({
     setCommentMarkKey((prev) => prev + 1);
   }
 
-  // LanguageTool popover state
-  const [ltMatch, setLtMatch] = useState(null);
-  const [ltAnchorPos, setLtAnchorPos] = useState(null);
-  const ltMatchClickRef = useRef(null);
-  ltMatchClickRef.current = useCallback((match, event) => {
-    setLtMatch(match);
-    setLtAnchorPos({ x: event.clientX, y: event.clientY });
+  // Harper popover state
+  const [harperMatch, setHarperMatch] = useState(null);
+  const [harperAnchorPos, setHarperAnchorPos] = useState(null);
+  const harperMatchClickRef = useRef(null);
+  harperMatchClickRef.current = useCallback((match, event) => {
+    setHarperMatch(match);
+    setHarperAnchorPos({ x: event.clientX, y: event.clientY });
   }, []);
 
-  const handleLtDismiss = useCallback(() => {
-    setLtMatch(null);
-    setLtAnchorPos(null);
+  const handleHarperDismiss = useCallback(() => {
+    setHarperMatch(null);
+    setHarperAnchorPos(null);
   }, []);
+
+  const configuredExtensions = [
+    ...(extensions
+      ? extensions.filter((extension) => extension?.name !== 'harper')
+      : [
+          StarterKit,
+          RawCell,
+          CodeCell,
+          Underline,
+          Highlight,
+          Link.configure({
+            openOnClick: false,
+            autolink: true,
+            linkOnPaste: true,
+            defaultProtocol: 'https',
+          }),
+          Table,
+          TableCell,
+          TableHeader,
+          TableRow,
+          TrackChangeExtension,
+          Mathematics,
+          InlineMath,
+          CommentMark.configure({
+            HTMLAttributes: { class: 'comment-mark' },
+            onUpdate: handleCommentMarkUpdate
+          }),
+          CitationMark,
+          InlineRExtension,
+        ]),
+    HarperExtension.configure({
+      onMatchClick: (match, event) => harperMatchClickRef.current?.(match, event),
+      isEnabled: () => spellcheckEnabledRef.current,
+    }),
+  ];
 
   const editor = useEditor({
-    extensions: extensions || [
-      StarterKit,
-      RawCell,
-      CodeCell,
-      Underline,
-      Highlight,
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-        linkOnPaste: true,
-        defaultProtocol: 'https',
-      }),
-      Table,
-      TableCell,
-      TableHeader,
-      TableRow,
-      TrackChangeExtension,
-      Mathematics,
-      InlineMath,
-      CommentMark.configure({
-        HTMLAttributes: { class: 'comment-mark' },
-        onUpdate: handleCommentMarkUpdate
-      }),
-      CitationMark,
-      InlineRExtension,
-      LanguageToolExtension.configure({
-        onMatchClick: (match, event) => ltMatchClickRef.current?.(match, event),
-      }),
-    ],
+    extensions: configuredExtensions,
     content: '',
     enableContentCheck: true,
     editorProps: {
@@ -212,11 +239,20 @@ const EditorWrapper = ({
     },
   });
 
-  const handleLtAccept = useCallback((replacement) => {
-    if (!editor || !ltMatch) return;
-    editor.chain().focus().deleteRange({ from: ltMatch.from, to: ltMatch.to }).insertContentAt(ltMatch.from, replacement).run();
-    handleLtDismiss();
-  }, [editor, ltMatch, handleLtDismiss]);
+  const handleHarperAccept = useCallback((replacement) => {
+    if (!editor || !harperMatch) return;
+    editor.chain().focus().deleteRange({ from: harperMatch.from, to: harperMatch.to }).insertContentAt(harperMatch.from, replacement).run();
+    handleHarperDismiss();
+  }, [editor, harperMatch, handleHarperDismiss]);
+
+  const handleToggleSpellcheck = useCallback(() => {
+    const nextValue = !spellcheckEnabledRef.current;
+    spellcheckEnabledRef.current = nextValue;
+    setSpellcheckEnabled(nextValue);
+    setHarperMatch(null);
+    setHarperAnchorPos(null);
+
+  }, [editor]);
 
   const handleRenderInlineR = useCallback(async () => {
     if (!editor || isRenderingInlineR) return;
@@ -746,6 +782,8 @@ const EditorWrapper = ({
             isRenderingInlineR={isRenderingInlineR}
             showSource={showSource}
             onToggleSource={handleToggleSource}
+            spellcheckEnabled={spellcheckEnabled}
+            onToggleSpellcheck={handleToggleSpellcheck}
           />
         )}
       </header>
@@ -806,11 +844,11 @@ const EditorWrapper = ({
         filePath={filePath}
       />
 
-      <LanguageToolPopover
-        match={ltMatch}
-        anchorPos={ltAnchorPos}
-        onAccept={handleLtAccept}
-        onDismiss={handleLtDismiss}
+      <HarperPopover
+        match={harperMatch}
+        anchorPos={harperAnchorPos}
+        onAccept={handleHarperAccept}
+        onDismiss={handleHarperDismiss}
       />
 
       <footer className="app-footer">

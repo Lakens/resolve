@@ -260,7 +260,7 @@ Major additions in this fork include:
 - GitHub data file sync for R workflows
 - Zotero citation picker
 - DOI-based citation insertion
-- LanguageTool grammar and spell checking
+- Harper local grammar and spell checking
 - diff viewer
 - dark mode
 - word count and unsaved-words warning

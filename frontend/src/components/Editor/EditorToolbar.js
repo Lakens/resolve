@@ -14,7 +14,7 @@ import { zoteroPickReference } from '../../utils/api';
 import bibtexParse from 'bibtex-parser-js';
 import { formatApaInText } from '../../utils/apaUtils';
 
-const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview, onTogglePreview, showDiff, onToggleDiff, onRenderInlineR, isRenderingInlineR, showSource, onToggleSource }) => {
+const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview, onTogglePreview, showDiff, onToggleDiff, onRenderInlineR, isRenderingInlineR, showSource, onToggleSource, spellcheckEnabled, onToggleSpellcheck }) => {
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
   const [showBgColorMenu, setShowBgColorMenu] = useState(false);
@@ -506,6 +506,14 @@ const EditorToolbar = ({ editor, onToggleComments, referenceManager, showPreview
           title="Toggle Preview"
         >
           Preview
+        </button>
+
+        <button
+          className={`tb-action-btn${spellcheckEnabled ? ' tb-action-btn--active' : ''}`}
+          onClick={onToggleSpellcheck}
+          title={spellcheckEnabled ? 'Turn spellcheck off' : 'Turn spellcheck on'}
+        >
+          Spell
         </button>
       </div>
     </div>
