@@ -82,6 +82,187 @@ Only install releases you downloaded from this repository’s **Releases** page:
 
 If you prefer not to trust unsigned binaries, you can build the app from source yourself.
 
+### Alternative install options
+
+If your operating system blocks the packaged app, there are three practical alternatives:
+
+*   clone the repository and run QuartoReview locally
+*   run it in your browser from a local checkout
+*   build the desktop app yourself on your own machine
+
+#### Option 1: Clone the repository and run locally
+
+**Windows**
+
+1.  Install **Node.js LTS** from https://nodejs.org
+2.  Install **Git** from https://git-scm.com/download/win
+3.  Clone the repository:
+
+    ```powershell
+    git clone https://github.com/Lakens/QuartoReview.git
+    cd QuartoReview
+    ```
+
+4.  Run:
+
+    ```powershell
+    .\install.bat
+    ```
+
+5.  Then launch:
+
+    ```powershell
+    .\start.bat
+    ```
+
+**macOS**
+
+1.  Install **Node.js LTS** from https://nodejs.org
+2.  Install **Git** if it is not already available:
+
+    ```bash
+    xcode-select --install
+    ```
+
+3.  Clone the repository:
+
+    ```bash
+    git clone https://github.com/Lakens/QuartoReview.git
+    cd QuartoReview
+    ```
+
+4.  Run:
+
+    ```bash
+    chmod +x install.sh start.sh
+    ./install.sh
+    ```
+
+5.  Then launch:
+
+    ```bash
+    ./start.sh
+    ```
+
+#### Option 2: Run it in the browser from a local checkout
+
+This avoids launching the packaged Electron app. It is useful if you want to try QuartoReview without building an installer.
+
+**Windows**
+
+1.  Install **Node.js LTS** and **Git**.
+2.  Clone the repository:
+
+    ```powershell
+    git clone https://github.com/Lakens/QuartoReview.git
+    cd QuartoReview
+    ```
+
+3.  Install dependencies:
+
+    ```powershell
+    npm run install:backend
+    npm run install:frontend
+    ```
+
+4.  Start QuartoReview in browser mode:
+
+    ```powershell
+    .\start.bat
+    ```
+
+5.  If your browser does not open automatically, go to:
+
+    ```text
+    http://localhost:5173
+    ```
+
+**macOS**
+
+1.  Install **Node.js LTS** and **Git**.
+2.  Clone the repository:
+
+    ```bash
+    git clone https://github.com/Lakens/QuartoReview.git
+    cd QuartoReview
+    ```
+
+3.  Install dependencies:
+
+    ```bash
+    npm run install:backend
+    npm run install:frontend
+    ```
+
+4.  In the first Terminal window, start the backend:
+
+    ```bash
+    cd backend
+    npm start
+    ```
+
+5.  In a second Terminal window, start the frontend:
+
+    ```bash
+    cd frontend
+    npm start
+    ```
+
+6.  Open your browser at:
+
+    ```text
+    http://localhost:5173
+    ```
+
+#### Option 3: Build the desktop app yourself
+
+This still creates an unsigned app unless you add signing yourself, but some users prefer building from source on their own machine instead of downloading a prebuilt binary.
+
+**Windows**
+
+1.  Install **Node.js LTS** and **Git**.
+2.  Clone the repository:
+
+    ```powershell
+    git clone https://github.com/Lakens/QuartoReview.git
+    cd QuartoReview
+    ```
+
+3.  Run:
+
+    ```powershell
+    .\build_win.bat
+    ```
+
+4.  When the build finishes, the installer will be in:
+
+    ```text
+    dist\
+    ```
+
+**macOS**
+
+1.  Install **Node.js LTS** and **Git**.
+2.  Clone the repository:
+
+    ```bash
+    git clone https://github.com/Lakens/QuartoReview.git
+    cd QuartoReview
+    ```
+
+3.  Run:
+
+    ```bash
+    chmod +x build_mac.sh
+    ./build_mac.sh
+    ```
+
+4.  When the build finishes, the macOS artifacts will be in:
+
+    ```text
+    dist/
+    ```
+
 ### First launch
 
 On first launch, QuartoReview opens to an empty workspace.
