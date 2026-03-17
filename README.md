@@ -42,7 +42,7 @@ These links always point to the newest tagged release.
     
 3.  Drag **QuartoReview** into **Applications**.
     
-4.  Because the app is currently **not code-signed or notarized**, macOS may block the first launch.
+4.  Because the current macOS build is **not yet code-signed or notarized**, macOS may block the first launch.
     
 5.  Try opening the app once from **Applications**.
     
@@ -56,7 +56,15 @@ These links always point to the newest tagged release.
         
     *   confirm by clicking **Open**
         
-7.  After that first approval, the app should launch normally.
+7.  If **Open Anyway** is still not sufficient, you can use this last-resort workaround in Terminal:
+
+    ```bash
+    xattr -dr com.apple.quarantine "/Applications/QuartoReview.app"
+    ```
+
+    Only do this for a copy you downloaded from this repository's official **Releases** page.
+
+8.  After that first approval or quarantine removal, the app should launch normally.
 
 ### Important note about unsigned apps
 
@@ -65,6 +73,8 @@ QuartoReview releases are currently unsigned on both Windows and macOS. That mea
 *   Windows may show a SmartScreen warning before first launch.
     
 *   macOS may block the app until you explicitly allow it in **Privacy & Security**.
+
+This is a temporary limitation of the current macOS build process. We are exploring signing and notarization options to make installation easier and avoid extra Gatekeeper steps.
 
 Only install releases you downloaded from this repository’s **Releases** page:
 
@@ -198,7 +208,7 @@ In local-file mode, bibliography support is more limited and there is not yet th
 
 **Windows says the app is unsafe** -> This is expected for an unsigned app. Use **More info** -> **Run anyway** only if you downloaded it from this repository’s Releases page.
 
-**macOS says the app cannot be opened** -> Open **System Settings** -> **Privacy & Security** and click **Open Anyway** for QuartoReview.
+**macOS says the app cannot be opened** -> Open **System Settings** -> **Privacy & Security** and click **Open Anyway** for QuartoReview. If that still does not work, as a last resort run `xattr -dr com.apple.quarantine "/Applications/QuartoReview.app"` in Terminal for the copy you downloaded from the official Releases page.
 
 **The app opens but I cannot see repositories** -> Complete the in-app GitHub setup flow successfully first. Repositories only appear after authentication.
 
